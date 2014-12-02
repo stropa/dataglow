@@ -35,7 +35,7 @@ public class BuildHistoricalStatsController {
                                        @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime from,
                                        @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime to) {
 
-        List<ReportParams> configs = statsReportSchedulingConfiguration.getConfigs();
+        List<ReportParams> configs = statsReportSchedulingConfiguration.getReports();
         ReportParams reportParams = null;
         for (ReportParams params : configs) {
             if (params.getReportName().equals(report)) reportParams = params;
