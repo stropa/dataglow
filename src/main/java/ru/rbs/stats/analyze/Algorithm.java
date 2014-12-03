@@ -7,6 +7,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public interface Algorithm {
-    List<Artefact> apply(TimedCubeDataSource dataSource, CubeCoordinates coordinates,
+    List<Artifact> apply(TimedCubeDataSource dataSource, CubeCoordinates coordinates,
                          LocalDateTime periodStart, LocalDateTime periodEnd);
 }

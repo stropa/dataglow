@@ -12,6 +12,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import ru.rbs.stats.Stats;
 import ru.rbs.stats.data.ReportParams;
 
+import javax.annotation.PostConstruct;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -31,14 +32,7 @@ public class StatsReportSchedulingConfiguration {
     private Stats stats;
 
     public StatsReportSchedulingConfiguration() {
-        final ReportParams merchant_daily_counts = new ReportParams("merchant_daily_counts", "1 DAYS");
-        merchant_daily_counts.setJob(new Runnable() {
-            @Override
-            public void run() {
-                stats.calculateAndReportStats(merchant_daily_counts, false);
-            }
-        });
-        reports.add(merchant_daily_counts);
+
     }
 
     @Bean
@@ -46,10 +40,23 @@ public class StatsReportSchedulingConfiguration {
         return new Stats();
     }
 
+    @PostConstruct
+    public void init() {
+        final ReportParams merchantDailyCounts = new ReportParams("merchantDailyCounts", "1 DAYS");
+        merchantDailyCounts.setCubeDescription(stats.getMetricsRegistry().getCubes().get("merchant.operation.actionCode"));
+        merchantDailyCounts.setJob(new Runnable() {
+            @Override
+            public void run() {
+                stats.calculateAndReportStats(merchantDailyCounts, false);
+            }
+        });
+        reports.add(merchantDailyCounts);
+    }
+
     @Scheduled(fixedRate = 1000)
     public void timeToWork() {
         //runJobs(reports);
-        runJobs(stats.getMetricsRegistry().getAnalyzers());
+        //runJobs(stats.getMetricsRegistry().getAnalyzers());
     }
 
     private void runJobs(Collection<? extends Schedulable> jobConfigs) {

@@ -7,15 +7,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
-import ru.rbs.stats.analyze.Artefact;
+import ru.rbs.stats.analyze.Artifact;
 import ru.rbs.stats.analyze.TimeSeriesAnalyzeConfig;
 import ru.rbs.stats.analyze.alg.TripleSigmaRule;
-import ru.rbs.stats.data.InfluxDBCubeDataSource;
-import ru.rbs.stats.data.ReportParams;
-import ru.rbs.stats.data.StatsReportBuilder;
-import ru.rbs.stats.data.TimedCubeDataSource;
+import ru.rbs.stats.data.*;
 import ru.rbs.stats.data.merchants.DBHistoryMetricsCalculator;
-import ru.rbs.stats.data.merchants.ReportEntry;
 import ru.rbs.stats.store.CubeCoordinates;
 import ru.rbs.stats.store.CubeDescription;
 import ru.rbs.stats.store.CubeSchemaProvider;
@@ -33,6 +29,7 @@ import static java.util.Arrays.asList;
 public class Stats implements CubeSchemaProvider {
 
     private static final Logger logger = LoggerFactory.getLogger(Stats.class);
+    public static final String DATABASE_NAME = "play";
 
     @Autowired
     private InfluxDB influxDB;
@@ -49,9 +46,9 @@ public class Stats implements CubeSchemaProvider {
 
     @PostConstruct
     public void init() {
-        reportBuilders.put("merchant_daily_counts", new DBHistoryMetricsCalculator(jdbcTemplate));
+        reportBuilders.put("merchantDailyCounts", new DBHistoryMetricsCalculator(jdbcTemplate));
 
-        cubeDataSource = new InfluxDBCubeDataSource(influxDB, "play", this);
+        cubeDataSource = new InfluxDBCubeDataSource(influxDB, DATABASE_NAME, this);
 
         final CubeCoordinates c = new CubeCoordinates("merchant.operation.actionCode");
         c.setAxis("merchant", "bsigroup");
@@ -67,16 +64,16 @@ public class Stats implements CubeSchemaProvider {
                 LocalDateTime periodStart = firstAnalyzer.getLastRun();
                 LocalDateTime periodEnd = firstAnalyzer.getLastRun().plusSeconds(firstAnalyzer.getPeriodSeconds());
 
-                List<Artefact> artefacts = firstAnalyzer.getAlgorithm().apply(cubeDataSource, c, periodStart, periodEnd);
+                List<Artifact> artifacts = firstAnalyzer.getAlgorithm().apply(cubeDataSource, c, periodStart, periodEnd);
 
-                for (Artefact artefact : artefacts) {
-                    logger.debug("ARTEFACT DISCOVERED!!!: " + artefact + " in cube: " + c);
+                for (Artifact artifact : artifacts) {
+                    logger.debug("ARTIFACT DISCOVERED!!!: " + artifact + " in cube: " + c);
                 }
             }
         });
-
-
         metricsRegistry.addSeriesAnalyzer(firstAnalyzer);
+
+
         CubeDescription firstTestCube = new CubeDescription("merchant.operation.actionCode");
         firstTestCube.setDimensions(asList("merchant", "operation", "actionCode"));
         firstTestCube.setAgregates(asList("count", "amount"));
@@ -104,28 +101,39 @@ public class Stats implements CubeSchemaProvider {
             config.setLastRun(periodEnd);
         }
 
-        List<ReportEntry> report = reportBuilder.report(periodStart, periodEnd);
+        Report report = reportBuilder.buildReport(config, periodStart, periodEnd);
+        updateAnalyzers(report);
 
         sendToStorage(report, periodEnd);
 
     }
 
+    private void updateAnalyzers(Report report) {
 
-    public void sendToStorage(List<ReportEntry> report, LocalDateTime time) {
-        Serie.Builder builder = new Serie.Builder(ReportEntry.getName());
-        List<String> columns = asList(ReportEntry.getColumns());
-        List<String> allColumns = new ArrayList<String>(columns);
+    }
+
+
+    public void sendToStorage(Report report, LocalDateTime time) {
+        Serie.Builder builder = new Serie.Builder(report.getCubeDescription().getName());
+
+        List<String> allColumns = new ArrayList<String>();
+        allColumns.addAll(report.getCubeDescription().getDimensions());
+        allColumns.addAll(report.getCubeDescription().getAgregates());
         allColumns.add("time");
         builder.columns(allColumns.toArray(new String[allColumns.size()]));
+
         Instant instant = ((ChronoZonedDateTime) time.atZone(ZoneId.systemDefault())).toInstant();
         Date timeSoSend = Date.from(instant);
-        for (ReportEntry entry : report) {
-            builder.values(entry.getMerchant(), entry.getOperation(), entry.getActionCode(), entry.getCount(),
-                    entry.getAmount(), timeSoSend.getTime() / 1000);
+        for (ReportEntry entry : report.getEntries()) {
+            List vals = new ArrayList();
+            vals.addAll(asList(entry.getProfile()));
+            vals.addAll(asList(entry.getAggregates()));
+            vals.add(timeSoSend.getTime() / 1000);
+            builder.values(vals.toArray());
         }
         Serie serie = builder.build();
 
-        influxDB.write("play", TimeUnit.SECONDS, serie);
+        influxDB.write(DATABASE_NAME, TimeUnit.SECONDS, serie);
     }
 
     public Map<String, StatsReportBuilder> getReportBuilders() {

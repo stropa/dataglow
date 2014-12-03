@@ -10,8 +10,9 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import ru.rbs.stats.Stats;
 import ru.rbs.stats.configuration.StatsReportSchedulingConfiguration;
-import ru.rbs.stats.data.*;
-import ru.rbs.stats.data.merchants.ReportEntry;
+import ru.rbs.stats.data.Report;
+import ru.rbs.stats.data.ReportParams;
+import ru.rbs.stats.data.StatsReportBuilder;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -55,9 +56,9 @@ public class BuildHistoricalStatsController {
         int part = 1;
         while (periodEnd.isBefore(to.minusSeconds(periodSeconds))) {
             // build report for next period part
-            List<ReportEntry> reportEntries = reportBuilder.report(
+            Report reportEntries = reportBuilder.buildReport(reportParams,
                     part > 1 ? periodStart.plusNanos(1000) : periodStart, periodEnd);
-            logger.debug("Sending page {} of {} entries", part, reportEntries.size());
+            logger.debug("Sending page {} of {} entries", part, reportEntries.getEntries().size());
             stats.sendToStorage(reportEntries, periodEnd);
             periodEnd = periodEnd.plusSeconds(periodSeconds);
             periodStart = periodStart.plusSeconds(periodSeconds);
