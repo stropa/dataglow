@@ -1,13 +1,13 @@
 package ru.rbs.stats.data.merchants;
 
-public class ReportEntry {
+public class MerchantReportEntry {
     long count;
     long amount;
     String merchant;
     String operation;
     int actionCode;
 
-    ReportEntry(long count, long amount, String merchant, String operation, int actionCode) {
+    MerchantReportEntry(long count, long amount, String merchant, String operation, int actionCode) {
         this.count = count;
         this.amount = amount;
         this.merchant = merchant;

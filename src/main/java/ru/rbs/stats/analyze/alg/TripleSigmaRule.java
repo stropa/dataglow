@@ -4,7 +4,7 @@ import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.rbs.stats.analyze.Algorithm;
-import ru.rbs.stats.analyze.Artefact;
+import ru.rbs.stats.analyze.Artifact;
 import ru.rbs.stats.data.TimedCubeDataSource;
 import ru.rbs.stats.data.series.time.Point;
 import ru.rbs.stats.store.CubeCoordinates;
@@ -25,10 +25,10 @@ public class TripleSigmaRule implements Algorithm {
     }
 
     @Override
-    public List<Artefact> apply(TimedCubeDataSource dataSource, CubeCoordinates coordinates,
+    public List<Artifact> apply(TimedCubeDataSource dataSource, CubeCoordinates coordinates,
                                 LocalDateTime periodStart, LocalDateTime periodEnd) {
 
-        List<Artefact> results = new ArrayList<Artefact>();
+        List<Artifact> results = new ArrayList<Artifact>();
         List<Point> points = dataSource.fetch(coordinates, periodStart, periodEnd);
         long seconds = Duration.between(periodStart, periodEnd).getSeconds();
         List<Point> wider = dataSource.fetch(coordinates, periodStart.minusSeconds(seconds * span), periodEnd);
@@ -42,7 +42,7 @@ public class TripleSigmaRule implements Algorithm {
         logger.debug("Mean: " + mean + " stdev: " + stdev);
         for (Point point : points) {
             if (Math.abs(point.getValue() - mean) > stdev * 3) {
-                results.add(new Artefact(point.getTimestamp(), "3sigm"));
+                results.add(new Artifact(point.getTimestamp(), "3sigm"));
             }
         }
 
