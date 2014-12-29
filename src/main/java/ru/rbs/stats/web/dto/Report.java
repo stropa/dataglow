@@ -6,15 +6,14 @@ public class Report {
     private String query;
     private int period;
     private String periodUnits;
-    private long lastBuildTime;
+    private Long lastBuildTime;
 
 
-    public Report(String name, String query, int period, String periodUnits, long lastBuildTime) {
+    public Report(String name, String query, int period, String periodUnits) {
         this.name = name;
         this.query = query;
         this.period = period;
         this.periodUnits = periodUnits;
-        this.lastBuildTime = lastBuildTime;
     }
 
 
@@ -58,11 +57,11 @@ public class Report {
         this.periodUnits = periodUnits;
     }
 
-    public long getLastBuildTime() {
+    public Long getLastBuildTime() {
         return lastBuildTime;
     }
 
-    public void setLastBuildTime(long lastBuildTime) {
+    public void setLastBuildTime(Long lastBuildTime) {
         this.lastBuildTime = lastBuildTime;
     }
 }
