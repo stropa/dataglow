@@ -11,6 +11,10 @@ public class ReportParams extends AbstractSchedulableJob {
 
     private String reportName;
     private CubeDescription cubeDescription;
+    private TimeUnit timeUnit;
+    private String sql;
+
+
 
     public ReportParams(String reportName, Long periodSeconds) {
         this.reportName = reportName;
@@ -30,13 +34,15 @@ public class ReportParams extends AbstractSchedulableJob {
         this.reportName = reportName;
     }
 
-    public String getPeriod() {
-        return periodSeconds + " MILLISECONDS";
+    public String getPeriodInSecondsFormatted() {
+        return periodSeconds + " SECONDS";
     }
 
     public void setPeriod(String periodStr) {
-        this.periodSeconds = TimeUnit.SECONDS.convert(Long.parseLong(substringBefore(periodStr, " ")),
-                TimeUnit.valueOf(substringAfterLast(periodStr, " ")));
+        long duration = Long.parseLong(substringBefore(periodStr, " "));
+        TimeUnit unit = TimeUnit.valueOf(substringAfterLast(periodStr, " "));
+        this.timeUnit = unit;
+        this.periodSeconds = TimeUnit.SECONDS.convert(duration,unit);
     }
 
     public CubeDescription getCubeDescription() {
@@ -45,5 +51,21 @@ public class ReportParams extends AbstractSchedulableJob {
 
     public void setCubeDescription(CubeDescription cubeDescription) {
         this.cubeDescription = cubeDescription;
+    }
+
+    public TimeUnit getTimeUnit() {
+        return timeUnit;
+    }
+
+    public void setTimeUnit(TimeUnit timeUnit) {
+        this.timeUnit = timeUnit;
+    }
+
+    public String getSql() {
+        return sql;
+    }
+
+    public void setSql(String sql) {
+        this.sql = sql;
     }
 }

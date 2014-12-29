@@ -1,0 +1,203 @@
+<!doctype html>
+
+<html ng-app="dataglow">
+
+<head>
+    <title>dataGlow</title>
+    <meta name="viewport" content="width=device-width">
+    <link rel="stylesheet" href="css/bootstrap.css">
+    <link rel="stylesheet" href="css/app.css">
+
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+    <script type="text/javascript" src="js/bootstrap.js"></script>
+    <script type="text/javascript" src="js/angular.js"></script>
+    <script src="js/angular-resource.js"></script>
+
+    <script type="text/javascript" src="app/dataglow-app.js"></script>
+    <script src="app/data-services.js"></script>
+
+    <style type="text/css">
+        /*       * Style tweaks       * --------------------------------------------------       */
+        body {
+            padding-top: 70px;
+        }
+
+        footer {
+            padding-left: 15px;
+            padding-right: 15px;
+        }
+
+        /*       * Off Canvas       * --------------------------------------------------       */
+        @media screen and(max-width: 768px) {
+            .row-offcanvas {
+                position: relative;
+                -webkit-transition: all 0.25s ease-out;
+                -moz-transition: all 0.25s ease-out;
+                transition: all 0.25s ease-out;
+            }
+
+            .row-offcanvas-right .sidebar-offcanvas {
+                right: -50%;
+                /* 6 columns */
+            }
+
+            .row-offcanvas-left .sidebar-offcanvas {
+                left: -50%;
+                /* 6 columns */
+            }
+
+            .row-offcanvas-right.active {
+                right: 50%;
+                /* 6 columns */
+            }
+
+            .row-offcanvas-left.active {
+                left: 50%;
+                /* 6 columns */
+            }
+
+            .sidebar-offcanvas {
+                position: absolute;
+                top: 0;
+                width: 50%;
+                /* 6 columns */
+            }
+        }
+    </style>
+</head>
+
+<body ng-controller="MainCtrl">
+<div class="navbar navbar-fixed-top navbar-inverse" role="navigation">
+    <div class="container">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                <span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="#">dataGlow</a>
+        </div>
+        <div class="collapse navbar-collapse">
+            <ul class="nav navbar-nav">
+                <li class="active">
+                    <a href="#">Reports</a>
+                </li>
+                <li>
+                    <a href="#about">Stats</a>
+                </li>
+                <li>
+                    <a href="#contact">Events</a>
+                </li>
+            </ul>
+        </div>
+        <!-- /.nav-collapse -->
+    </div>
+    <!-- /.container -->
+</div>
+<!-- /.navbar -->
+<div class="container">
+    <div class="row row-offcanvas row-offcanvas-right">
+        <div class="col-xs-12 col-sm-9">
+            <div class="row">
+                <div class="container">
+                    <button type="button" class="btn btn-link" ng-click="startCreating()">
+                        <span class="glyphicon glyphicon-plus"></span>Create New Report
+                    </button>
+                    <form class="report-edit-form" ng-show="isCreating" ng-submit="createNewReport(newReport)">
+                        <!--<label class="form-label">Create report from SQL</label>-->
+                        <div class="row">
+                            <div class="col-xs-8 form-group">
+                                <div class="form-group">
+                                    <label class="form-label">Name</label>
+                                    <input class="form-control" type="text" ng-model="newReport.name"/>
+                                </div>
+                                <div class="form-group ">
+                                    <label class="form-label">Query</label>
+                                    <textarea ng-model="newReport.query" class="form-control" name="sql" rows="5"
+                                              placeholder="select a, b, count(c), sum(d) from data_table group by a,b"></textarea>
+                                </div>
+                            </div>
+                            <div class="col-xs-4">
+                                <div class="form-group">
+                                    <label class="form-label">Scheduling</label>
+                                    <select class="form-control" ng-model="newReport.periodType" name="period_type">
+                                        <option>Periodical</option>
+                                        <option>On Demand</option>
+                                    </select>
+                                </div>
+                                <hr>
+                                <div class="form-group form-inline">
+                                    <label class="form-label">Period:</label>
+                                    <input type="text" ng-model="newReport.period" size="1" class="form-control"
+                                           value="1"/>
+                                    <select class="form-control" ng-model="newReport.periodUnits" name="period_units">
+                                        <option>MINUTES</option>
+                                        <option>HOURS</option>
+                                        <option>DAYS</option>
+                                        <option>WEEKS</option>
+                                        <option>MONTHS</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-xs-12">
+                                <div class="form-group form-inline">
+                                    <button type="submit" class="btn btn-primary">Create</button>
+                                    <button type="button" ng-click="stopCreation()" class="btn btn-default">Dismiss</button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <!--/span-->
+                <!--/span-->
+                <!--/span-->
+                <!--/span-->
+                <!--/span-->
+                <!--/span-->
+            </div>
+            <!--/row-->
+        </div>
+        <!--/span-->
+
+        <div class="row">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>Report Name</th>
+                    <th>Period</th>
+                    <th>Last Build</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr ng-repeat="report in reports">
+                    <td>{{report.name}}</td>
+                    <td>{{report.period}} {{report.periodUnits}}</td>
+                    <td>{{report.lastBuildTime | date:'dd-M-yyyy H:mm'}}</td>
+                </tr>
+                <!--<tr>
+                    <td>merchant_minute_counts</td>
+                    <td>1 MINUTE</td>
+                    <td>21/12/2014 14:01</td>
+                </tr>-->
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+    <!--/row-->
+    <hr>
+    <footer>
+        <p>&copy; Company 2013</p>
+    </footer>
+    <!--/.container-->
+    <script>
+        $(document).ready(function () {
+            $('[data-toggle=offcanvas]').click(function () {
+                $('.row-offcanvas').toggleClass('active');
+            });
+        });
+    </script>
+</div>
+</body>
+
+</html>

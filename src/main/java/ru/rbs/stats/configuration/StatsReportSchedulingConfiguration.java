@@ -42,7 +42,7 @@ public class StatsReportSchedulingConfiguration {
 
     @PostConstruct
     public void init() {
-        final ReportParams merchantDailyCounts = new ReportParams("merchantDailyCounts", "1 DAYS");
+        final ReportParams merchantDailyCounts = new ReportParams("merchantDailyCounts", "1 MINUTES");
         merchantDailyCounts.setCubeDescription(stats.getMetricsRegistry().getCubes().get("merchant.operation.actionCode"));
         merchantDailyCounts.setJob(new Runnable() {
             @Override
@@ -50,12 +50,12 @@ public class StatsReportSchedulingConfiguration {
                 stats.calculateAndReportStats(merchantDailyCounts, false);
             }
         });
-        reports.add(merchantDailyCounts);
+        //reports.add(merchantDailyCounts);
     }
 
     @Scheduled(fixedRate = 1000)
     public void timeToWork() {
-        //runJobs(reports);
+        runJobs(reports);
         //runJobs(stats.getMetricsRegistry().getAnalyzers());
     }
 
