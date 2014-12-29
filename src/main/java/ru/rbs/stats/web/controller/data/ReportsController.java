@@ -45,12 +45,14 @@ public class ReportsController {
     public List<Report> getAll() {
         List<Report> reports = new ArrayList<Report>();
         for (ReportParams reportParams : reportSchedulingConfiguration.getReports()) {
-            reports.add(new Report(
+            Report report = new Report(
                     reportParams.getReportName(),
                     reportParams.getSql(),
-                    (int) reportParams.getPeriodSeconds(),
-                    reportParams.getTimeUnit().toString(),
-                    DateUtil.getMillis(reportParams.getLastRun())));
+                    (int) reportParams.getPeriodInUnits(),
+                    reportParams.getTimeUnit().toString());
+            report.setLastBuildTime(reportParams.getLastRun() != null ? DateUtil.getMillis(reportParams.getLastRun()) : null);
+            reports.add(report);
+
         }
         return reports;
     }

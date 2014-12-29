@@ -38,6 +38,14 @@ public class ReportParams extends AbstractSchedulableJob {
         return periodSeconds + " SECONDS";
     }
 
+    public String getPeriodFormatted() {
+        return timeUnit.convert(periodSeconds, TimeUnit.SECONDS) + timeUnit.name();
+    }
+
+    public long getPeriodInUnits() {
+        return timeUnit.convert(periodSeconds, TimeUnit.SECONDS);
+    }
+
     public void setPeriod(String periodStr) {
         long duration = Long.parseLong(substringBefore(periodStr, " "));
         TimeUnit unit = TimeUnit.valueOf(substringAfterLast(periodStr, " "));

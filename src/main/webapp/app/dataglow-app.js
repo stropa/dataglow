@@ -1,6 +1,6 @@
 var app = angular.module('dataglow', ['dataServices']);
 
-app.constant('serverLocation', 'http://localhost:8080/dataglow-server')
+app.constant('serverLocation', 'http://localhost:8080/dataglow-server/mvc')
 
 app.controller('MainCtrl', ['$scope', 'ReportsDataSource', function ($scope, ReportsDataSource) {
     $scope.hello = "world";
@@ -32,7 +32,9 @@ app.controller('MainCtrl', ['$scope', 'ReportsDataSource', function ($scope, Rep
 
     function createNewReport(newReport) {
         //$scope.reports.push(newReport);
-        ReportsDataSource.save(newReport)
+        ReportsDataSource.save(newReport, function success() {
+            $scope.reports = ReportsDataSource.query();
+        });
         resetCreateForm();
     }
 

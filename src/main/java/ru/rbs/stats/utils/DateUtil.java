@@ -8,6 +8,9 @@ import java.time.chrono.ChronoZonedDateTime;
 public class DateUtil {
 
     public static long getMillis(LocalDateTime time) {
+        if (time == null) {
+            return 0;
+        }
         Instant instant = ((ChronoZonedDateTime) time.atZone(ZoneId.systemDefault())).toInstant();
         return instant.toEpochMilli();
     }
