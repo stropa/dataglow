@@ -11,7 +11,6 @@ import ru.rbs.stats.analyze.Artifact;
 import ru.rbs.stats.analyze.TimeSeriesAnalyzeConfig;
 import ru.rbs.stats.analyze.alg.TripleSigmaRule;
 import ru.rbs.stats.data.*;
-import ru.rbs.stats.data.merchants.DBHistoryMetricsCalculator;
 import ru.rbs.stats.store.CubeCoordinates;
 import ru.rbs.stats.store.CubeDescription;
 import ru.rbs.stats.store.CubeSchemaProvider;
@@ -46,7 +45,7 @@ public class Stats implements CubeSchemaProvider {
 
     @PostConstruct
     public void init() {
-        reportBuilders.put("merchantDailyCounts", new DBHistoryMetricsCalculator(jdbcTemplate));
+        //reportBuilders.put("merchantDailyCounts", new SQLReportBuilder(jdbcTemplate));
 
         cubeDataSource = new InfluxDBCubeDataSource(influxDB, DATABASE_NAME, this);
 

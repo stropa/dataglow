@@ -1,31 +1,28 @@
 package ru.rbs.stats.data;
 
+import java.util.List;
+
 public class ReportEntry {
 
-    private Object[] profile;
-    private Number[] aggregates;
+    private List profile;
+    private List<Number> aggregates;
+
+    public ReportEntry() {}
 
 
-    public ReportEntry(Object[] profile, Number[] aggregates) {
-        this.profile = profile;
-        this.aggregates = aggregates;
-    }
-
-
-
-    public Object[] getProfile() {
+    public List getProfile() {
         return profile;
     }
 
-    public void setProfile(Object[] profile) {
+    public void setProfile(List profile) {
         this.profile = profile;
     }
 
-    public Number[] getAggregates() {
+    public List<Number> getAggregates() {
         return aggregates;
     }
 
-    public void setAggregates(Number[] aggregates) {
+    public void setAggregates(List<Number> aggregates) {
         this.aggregates = aggregates;
     }
 }
