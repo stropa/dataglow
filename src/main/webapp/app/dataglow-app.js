@@ -20,7 +20,9 @@ app.controller('MainCtrl', ['$scope', 'ReportsDataSource', function ($scope, Rep
         $scope.newReport = {
             name: 'new_report',
             period: null,
-            periodUnits: null
+            periodUnits: null,
+            useCache: false,
+            analyzeAll: false
         }
     }
 

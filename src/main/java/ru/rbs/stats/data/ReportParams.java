@@ -2,6 +2,8 @@ package ru.rbs.stats.data;
 
 import ru.rbs.stats.store.CubeDescription;
 
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.concurrent.TimeUnit;
 
 import static org.apache.commons.lang.StringUtils.substringAfterLast;
@@ -14,11 +16,22 @@ public class ReportParams extends AbstractSchedulableJob {
     private TimeUnit timeUnit;
     private String sql;
 
+    private boolean useCache;
+    private boolean cacheAll;
+    private String cacheMask;
+    private Duration cacheAge;
+    private boolean analyzeAll;
 
 
     public ReportParams(String reportName, Long periodSeconds) {
         this.reportName = reportName;
         this.periodSeconds = periodSeconds;
+    }
+
+    public ReportParams(String reportName, Long period, ChronoUnit periodUnits) {
+        this.reportName = reportName;
+        Duration duration = Duration.of(period, periodUnits);
+        this.periodSeconds = duration.getSeconds();
     }
 
     public ReportParams(String reportName, String period) {
@@ -75,5 +88,45 @@ public class ReportParams extends AbstractSchedulableJob {
 
     public void setSql(String sql) {
         this.sql = sql;
+    }
+
+    public boolean isUseCache() {
+        return useCache;
+    }
+
+    public void setUseCache(boolean useCache) {
+        this.useCache = useCache;
+    }
+
+    public boolean isCacheAll() {
+        return cacheAll;
+    }
+
+    public void setCacheAll(boolean cacheAll) {
+        this.cacheAll = cacheAll;
+    }
+
+    public String getCacheMask() {
+        return cacheMask;
+    }
+
+    public void setCacheMask(String cacheMask) {
+        this.cacheMask = cacheMask;
+    }
+
+    public Duration getCacheAge() {
+        return cacheAge;
+    }
+
+    public void setCacheAge(Duration cacheAge) {
+        this.cacheAge = cacheAge;
+    }
+
+    public boolean isAnalyzeAll() {
+        return analyzeAll;
+    }
+
+    public void setAnalyzeAll(boolean analyzeAll) {
+        this.analyzeAll = analyzeAll;
     }
 }

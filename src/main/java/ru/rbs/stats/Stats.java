@@ -7,23 +7,24 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
-import ru.rbs.stats.analyze.Artifact;
+import org.springframework.util.PatternMatchUtils;
 import ru.rbs.stats.analyze.TimeSeriesAnalyzeConfig;
 import ru.rbs.stats.analyze.alg.TripleSigmaRule;
 import ru.rbs.stats.data.*;
+import ru.rbs.stats.data.cache.CachedSerieContainer;
 import ru.rbs.stats.store.CubeCoordinates;
 import ru.rbs.stats.store.CubeDescription;
 import ru.rbs.stats.store.CubeSchemaProvider;
+import ru.rbs.stats.utils.CompositeName;
 
 import javax.annotation.PostConstruct;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.chrono.ChronoZonedDateTime;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
-
-import static java.util.Arrays.asList;
 
 public class Stats implements CubeSchemaProvider {
 
@@ -41,6 +42,7 @@ public class Stats implements CubeSchemaProvider {
     private Map<String, StatsReportBuilder> reportBuilders = new HashMap<String, StatsReportBuilder>();
 
     private static MetricsRegistry metricsRegistry = new MetricsRegistry();
+    private Map<CompositeName, CachedSerieContainer> cachedSeries = new HashMap<CompositeName, CachedSerieContainer>();
 
 
     @PostConstruct
@@ -63,28 +65,15 @@ public class Stats implements CubeSchemaProvider {
                 LocalDateTime periodStart = firstAnalyzer.getLastRun();
                 LocalDateTime periodEnd = firstAnalyzer.getLastRun().plusSeconds(firstAnalyzer.getPeriodSeconds());
 
-                List<Artifact> artifacts = firstAnalyzer.getAlgorithm().apply(cubeDataSource, c, periodStart, periodEnd);
+                /*List<Artifact> artifacts = firstAnalyzer.getAlgorithm().apply(cubeDataSource, c, periodStart, periodEnd);
 
                 for (Artifact artifact : artifacts) {
                     logger.debug("ARTIFACT DISCOVERED!!!: " + artifact + " in cube: " + c);
-                }
+                }*/
             }
         });
         metricsRegistry.addSeriesAnalyzer(firstAnalyzer);
-
-
-        CubeDescription firstTestCube = new CubeDescription("merchant.operation.actionCode");
-        firstTestCube.setDimensions(asList("merchant", "operation", "actionCode"));
-        firstTestCube.setAgregates(asList("count", "amount"));
-        HashMap<String, CubeDescription.CubeDataType> types = new HashMap<String, CubeDescription.CubeDataType>();
-        types.put("merchant", CubeDescription.CubeDataType.STRING);
-        types.put("operation", CubeDescription.CubeDataType.STRING);
-        types.put("actionCode", CubeDescription.CubeDataType.INTEGER);
-        firstTestCube.setTypes(types);
-        metricsRegistry.addCubeDescription(firstTestCube);
     }
-
-
 
 
     public void calculateAndReportStats(ReportParams config, boolean unscheduled) {
@@ -101,14 +90,74 @@ public class Stats implements CubeSchemaProvider {
         }
 
         Report report = reportBuilder.buildReport(config, periodStart, periodEnd);
-        updateAnalyzers(report);
+
+        updateCache(report, periodEnd, config);
+
+        runOnlineAnalyzers(config, report, periodStart, periodEnd);
 
         sendToStorage(report, periodEnd);
 
     }
 
-    private void updateAnalyzers(Report report) {
+    private void runOnlineAnalyzers(ReportParams config, Report report, LocalDateTime periodStart, LocalDateTime periodEnd) {
+        if (config.isAnalyzeAll()) {
+            CachedSerieDataProvider provider =  new CachedSerieDataProvider(cachedSeries);
+            for (ReportEntry entry : report.getEntries()) {
+                for (String aggregateName : report.getCubeDescription().getAgregates()) {
+                    CompositeName serieName = buildSerieName(entry, report.getCubeDescription());
+                    serieName = serieName.withPart(aggregateName);
+                    provider.setSerieName(serieName);
+                    // TODO: make Analyzers (algorithms) selectable for report
+                    new TripleSigmaRule(30).apply(provider, periodStart, periodEnd);
+                }
+            }
+        }
+    }
 
+    private void updateCache(Report report, LocalDateTime time, ReportParams reportParams) {
+        // TODO: move to some production-ready cache implementation. For now we start with the simplest one. Dummy and slow.
+        cleanExpiredCacheEntries(reportParams.getCacheAge());
+        for (ReportEntry entry : report.getEntries()) {
+            for (String aggregateName : report.getCubeDescription().getAgregates()) {
+                CompositeName serieName = buildSerieName(entry, report.getCubeDescription());
+                serieName = serieName.withPart(aggregateName);
+                if (reportParams.isCacheAll() ||
+                        (reportParams.isUseCache()
+                                && PatternMatchUtils.simpleMatch(reportParams.getCacheMask(), serieName.format()))) {
+                    CachedSerieContainer container = cachedSeries.get(serieName);
+                    if (container == null) {
+                        container = new CachedSerieContainer(serieName.format());
+                        cachedSeries.put(serieName, container);
+                    }
+                    container.putValue(time, entry.getAggregates().get(report.getCubeDescription().getAgregates().indexOf(aggregateName)));
+                }
+            }
+        }
+        logger.info("Finished updating cached series");
+    }
+
+    private void cleanExpiredCacheEntries(Duration cacheAge) {
+        for (CompositeName serieName : cachedSeries.keySet()) {
+            List<LocalDateTime> toRemove = new ArrayList<LocalDateTime>();
+            SortedMap<LocalDateTime, Number> serie = cachedSeries.get(serieName).getSerie();
+            Set<LocalDateTime> times = serie.keySet();
+            for (LocalDateTime t : times) {
+                if (t.isBefore(LocalDateTime.now().minus(cacheAge))) {
+                    toRemove.add(t);
+                }
+            }
+            for (LocalDateTime removing : toRemove) {
+                serie.remove(removing);
+            }
+        }
+    }
+
+    private CompositeName buildSerieName(ReportEntry entry, CubeDescription cubeDescription) {
+        CompositeName name = CompositeName.fromParts(cubeDescription.getName());
+        for (Object dimensionValue : entry.getProfile()) {
+            name = name.withPart(dimensionValue.toString());
+        }
+        return name;
     }
 
 
@@ -125,14 +174,15 @@ public class Stats implements CubeSchemaProvider {
         Date timeSoSend = Date.from(instant);
         for (ReportEntry entry : report.getEntries()) {
             List vals = new ArrayList();
-            vals.addAll(asList(entry.getProfile()));
-            vals.addAll(asList(entry.getAggregates()));
+            vals.addAll(entry.getProfile());
+            vals.addAll(entry.getAggregates());
             vals.add(timeSoSend.getTime() / 1000);
             builder.values(vals.toArray());
         }
         Serie serie = builder.build();
 
         influxDB.write(DATABASE_NAME, TimeUnit.SECONDS, serie);
+        logger.info("A serie " + serie.getName() + " of " + serie.getRows() + " rows was saved to storage");
     }
 
     public Map<String, StatsReportBuilder> getReportBuilders() {

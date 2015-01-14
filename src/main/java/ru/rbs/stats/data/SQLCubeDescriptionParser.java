@@ -1,14 +1,13 @@
 package ru.rbs.stats.data;
 
 import org.apache.commons.lang.NotImplementedException;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import ru.rbs.stats.store.CubeDescription;
-import schemacrawler.schema.Catalog;
-import schemacrawler.schema.Column;
-import schemacrawler.schema.Schema;
-import schemacrawler.schema.Table;
+import schemacrawler.schema.*;
+import schemacrawler.schemacrawler.InclusionRule;
 import schemacrawler.schemacrawler.SchemaCrawlerOptions;
 import schemacrawler.schemacrawler.SchemaInfoLevel;
 import schemacrawler.utility.SchemaCrawlerUtility;
@@ -17,13 +16,16 @@ import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import javax.sql.DataSource;
 import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static java.util.Arrays.asList;
 import static org.apache.commons.lang.StringUtils.*;
+import static ru.rbs.stats.configuration.SystemProperties.SCHEMA;
 import static schemacrawler.schema.JavaSqlType.JavaSqlTypeGroup;
 
 @Service
@@ -34,60 +36,79 @@ public class SQLCubeDescriptionParser {
     @Resource
     private DataSource dataSource;
 
+    @Resource(name = "systemProperties")
+    private Properties properties;
+
+    @Resource(name = "settings")
+    private Properties settings;
+
+    private String schemaName;
+
     private Catalog catalog;
 
     @PostConstruct
     public void readCatalog() throws Exception {
         SchemaCrawlerOptions options = new SchemaCrawlerOptions();
         options.setSchemaInfoLevel(SchemaInfoLevel.standard());
-        catalog = SchemaCrawlerUtility.getCatalog(dataSource.getConnection(), options);
+        //options.setTableNamePattern("bpc*");
+        final Connection connection = dataSource.getConnection();
+        schemaName = settings.getProperty(SCHEMA);
+        options.setSchemaInclusionRule(new InclusionRule() {
+            @Override
+            public boolean test(String s) {
+                return StringUtils.equalsIgnoreCase(s, schemaName);
+            }
+        });
+        options.setTableInclusionRule(new InclusionRule() {
+            @Override
+            public boolean test(String s) {
+                boolean b = StringUtils.containsIgnoreCase(s, "bpc");
+                logger.debug("Now on table: " + s + "will retrieve: " + b);
+                return b;
+            }
+        });
+        options.setRoutineTypes(Collections.<RoutineType>emptyList());
+        catalog = SchemaCrawlerUtility.getCatalog(connection, options);
     }
 
     public CubeDescription parseCubeFromQuery(String query, String name) {
 
         CubeDescription cubeDescription = new CubeDescription(name);
-        try {
-            Connection connection = dataSource.getConnection();
-
-
-            String columnsPart = query.substring(indexOfIgnoreCase(query, "select") + "select".length(),
-                    indexOfIgnoreCase(query, "from"));
-            String[] columns = columnsPart.split(",");
-            List<String> dimensions = new ArrayList<String>();
-            List<String> aggregates = new ArrayList<String>();
-            //Pattern p = Pattern.compile("");
-            for (String column : columns) {
-                String simpleName = column;
-                String tableColumnName = column;
-                //Matcher m = p.matcher(column);
-                if (containsIgnoreCase(simpleName, " as")) {
-                    simpleName = simpleName.substring(indexOfIgnoreCase(column, " as") + " as".length()).trim();
-                    tableColumnName = tableColumnName.substring(0,indexOfIgnoreCase(tableColumnName, " as"));
-                } else {
-                    simpleName = simpleName.replace('(', '_');
-                    simpleName = simpleName.replace(")", "");
-                    simpleName = simpleName.replace("*", "all");
-                    simpleName = simpleName.replace('.', '_');
-                    simpleName = simpleName.replace(" ", "");
-                }
-
-                tableColumnName = tableColumnName.replace(" ", "");
-                if (column.contains("(")) {
-                    aggregates.add(simpleName);
-                } else {
-                    dimensions.add(simpleName);
-                }
-                cubeDescription.getTypes().put(simpleName, selectType(tableColumnName, query));
+        String columnsPart = query.substring(indexOfIgnoreCase(query, "select") + "select".length(),
+                indexOfIgnoreCase(query, "from"));
+        String[] columns = columnsPart.split(",");
+        List<String> dimensions = new ArrayList<String>();
+        List<String> aggregates = new ArrayList<String>();
+        //Pattern p = Pattern.compile("");
+        for (String column : columns) {
+            String simpleName = column;
+            String tableColumnName = column;
+            //Matcher m = p.matcher(column);
+            if (containsIgnoreCase(simpleName, " as")) {
+                simpleName = simpleName.substring(indexOfIgnoreCase(column, " as") + " as".length()).trim();
+                tableColumnName = tableColumnName.substring(0, indexOfIgnoreCase(tableColumnName, " as"));
+            } else {
+                simpleName = simpleName.replace('(', '_');
+                simpleName = simpleName.replace(")", "");
+                simpleName = simpleName.replace("*", "all");
+                simpleName = simpleName.replace('.', '_');
+                simpleName = simpleName.replace(" ", "");
             }
 
-            cubeDescription.setDimensions(dimensions);
-            cubeDescription.setAgregates(aggregates);
-
-            return cubeDescription;
-
-        } catch (SQLException e) {
-            throw new DataSourceException("Failed to read schema info from SQL database");
+            tableColumnName = tableColumnName.replace(" ", "");
+            if (column.contains("(")) {
+                aggregates.add(simpleName);
+            } else {
+                dimensions.add(simpleName);
+            }
+            cubeDescription.getTypes().put(simpleName, selectType(tableColumnName, query));
         }
+
+        cubeDescription.setDimensions(dimensions);
+        cubeDescription.setAgregates(aggregates);
+
+        return cubeDescription;
+
     }
 
     CubeDescription.CubeDataType selectType(String columnName, String query) {
@@ -100,10 +121,25 @@ public class SQLCubeDescriptionParser {
 
             String tableName = getTableNameForColumn(columnName, query);
 
-            Schema schema = catalog.getSchema("public");
-            Table table = catalog.getTable(schema, tableName);
-            Column column = table.getColumn(substringAfter(columnName, "."));
-            JavaSqlTypeGroup typeGroup = column.getColumnDataType().getJavaSqlType().getJavaSqlTypeGroup();
+            Schema schema = catalog.getSchema(schemaName);
+            // TODO: handle name cases and quotation for different database vendors
+            Table table = catalog.getTable(schema, tableName.toUpperCase());
+            Column column = table.getColumn(substringAfter(columnName, ".").toUpperCase());
+
+            String name = column.getColumnDataType().getLocalTypeName().toUpperCase();
+            // TODO: discover types correctly
+            if (asList("NUMBER", "BIGINT", "INTEGER", "SMALLINT", "SMALLSERIAL", "BIGSERIAL", "SERIAL")
+                    .contains(name)) {
+                return CubeDescription.CubeDataType.INTEGER;
+            } else if (asList("DECIMAL", "NUMERIC", "REAL", "DOUBLE PRECISION").contains(name)) {
+                return CubeDescription.CubeDataType.FLOAT;
+            } else {
+                return CubeDescription.CubeDataType.STRING;
+            }
+
+
+            // a bug in schemacrawler - for NUMBER oracle type "bit" JavaSqlType is returned
+            /*JavaSqlTypeGroup typeGroup = column.getColumnDataType().getJavaSqlType().getJavaSqlTypeGroup();
             switch (typeGroup) {
                 case integer:
                     return CubeDescription.CubeDataType.INTEGER;
@@ -112,7 +148,7 @@ public class SQLCubeDescriptionParser {
                 case character:
                     return CubeDescription.CubeDataType.STRING;
 
-            }
+            }*/
 
         } catch (Exception e) {
             logger.error("Can't discover column type for field " + columnName, e);

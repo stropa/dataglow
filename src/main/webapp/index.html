@@ -132,9 +132,39 @@
                                         <option>MINUTES</option>
                                         <option>HOURS</option>
                                         <option>DAYS</option>
-                                        <option>WEEKS</option>
-                                        <option>MONTHS</option>
+                                        <!--<option>WEEKS</option>-->
                                     </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-xs-12">
+                                <div class="form-group">
+                                    <label class="form-label">Use Cache</label>
+                                    <input type="checkbox" ng-model="newReport.useCache"/>
+                                    <span ng-show="newReport.useCache">
+                                        <label class="form-label">Cache All</label>
+                                        <input type="checkbox" ng-model="newReport.cacheAll"/>
+                                        <span ng-show="!newReport.cacheAll">
+                                            <label class="form-label" ng-disabled="newReport.cacheAll">Cache mask</label>
+                                            <input type="text" ng-model="newReport.cacheMask" ng-disabled="newReport.cacheAll"/>
+                                        </span>
+                                        <span class="form-group form-inline">
+                                            <label class="form-label">Cache Max Age:</label>
+                                            <input type="text" ng-model="newReport.maxCacheAge" size="1" class="form-control"
+                                                   value="1"/>
+                                            <select class="form-control" ng-model="newReport.maxCacheAgeUnits" name="period_units">
+                                                <option>MINUTES</option>
+                                                <option selected="selected">HOURS</option>
+                                                <option>DAYS</option>
+                                                <!--<option>WEEKS</option>-->
+                                            </select>
+                                        </span>
+                                        <span ng-show="newReport.useCache">
+                                            <label class="form-label">Analyze All</label>
+                                        <input type="checkbox" ng-model="newReport.analyzeAll"/>
+                                        </span>
+                                    </span>
                                 </div>
                             </div>
                         </div>

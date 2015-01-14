@@ -16,6 +16,8 @@ import ru.rbs.stats.utils.DateUtil;
 import ru.rbs.stats.web.dto.Report;
 
 import javax.annotation.Resource;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -66,9 +68,26 @@ public class ReportsController {
     }
 
     private void buildNewReportConfig(Report report) {
-        final ReportParams params = new ReportParams(report.getName(), report.getPeriod() + " " + report.getPeriodUnits());
+        final ReportParams params = new ReportParams(report.getName(), (long) report.getPeriod(),
+                ChronoUnit.valueOf(report.getPeriodUnits()));
+
         params.setSql(report.getQuery());
+
         params.setCubeDescription(sqlCubeDescriptionParser.parseCubeFromQuery(report.getQuery(), report.getName()));
+
+        params.setUseCache(report.isUseCache());
+        if (report.isUseCache()) {
+            params.setCacheAll(report.isCacheAll());
+            params.setCacheMask(report.getCacheMask());
+
+            if (report.getMaxCacheAgeUnits() != null && report.getMaxCacheAge() > 0) {
+                params.setCacheAge(Duration.of(report.getMaxCacheAge(), ChronoUnit.valueOf(report.getMaxCacheAgeUnits())));
+            } else {
+                params.setCacheAge(Duration.ofHours(1));
+            }
+        }
+        params.setAnalyzeAll(report.isAnalyzeAll());
+
         params.setJob(new Runnable() {
             @Override
             public void run() {
