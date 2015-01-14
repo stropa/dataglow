@@ -1,10 +1,12 @@
 package ru.rbs.stats.analyze;
 
+import java.time.LocalDateTime;
+
 public class Artifact {
-    long timestamp;
+    LocalDateTime timestamp;
     String description;
 
-    public Artifact(long timestamp, String description) {
+    public Artifact(LocalDateTime timestamp, String description) {
         this.timestamp = timestamp;
         this.description = description;
     }

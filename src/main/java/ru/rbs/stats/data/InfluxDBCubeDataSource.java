@@ -9,6 +9,7 @@ import ru.rbs.stats.store.CubeCoordinates;
 import ru.rbs.stats.store.CubeDescription;
 import ru.rbs.stats.store.CubeSchemaProvider;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -45,7 +46,8 @@ public class InfluxDBCubeDataSource implements TimedCubeDataSource {
                 Object var = row.get(coordinates.getVarName());
                 float value = ((Double) var).floatValue();
                 long timestamp = ((Double) row.get("time")).longValue();
-                Point point = new Point(timestamp, value);
+                LocalDateTime time = LocalDateTime.from(Instant.ofEpochMilli(timestamp));
+                Point point = new Point(time, value);
                 points.add(point);
             }
 

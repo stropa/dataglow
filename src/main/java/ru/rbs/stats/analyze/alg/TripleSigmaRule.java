@@ -5,9 +5,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.rbs.stats.analyze.Algorithm;
 import ru.rbs.stats.analyze.Artifact;
-import ru.rbs.stats.data.TimedCubeDataSource;
+import ru.rbs.stats.data.TimeSerieDataProvider;
 import ru.rbs.stats.data.series.time.Point;
-import ru.rbs.stats.store.CubeCoordinates;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -25,13 +24,13 @@ public class TripleSigmaRule implements Algorithm {
     }
 
     @Override
-    public List<Artifact> apply(TimedCubeDataSource dataSource, CubeCoordinates coordinates,
+    public List<Artifact> apply(TimeSerieDataProvider dataProvider,
                                 LocalDateTime periodStart, LocalDateTime periodEnd) {
 
         List<Artifact> results = new ArrayList<Artifact>();
-        List<Point> points = dataSource.fetch(coordinates, periodStart, periodEnd);
+        List<Point> points = dataProvider.get(periodStart, periodEnd);
         long seconds = Duration.between(periodStart, periodEnd).getSeconds();
-        List<Point> wider = dataSource.fetch(coordinates, periodStart.minusSeconds(seconds * span), periodEnd);
+        List<Point> wider = dataProvider.get(periodStart.minusSeconds(seconds * span), periodEnd);
 
         SummaryStatistics stats = new SummaryStatistics();
         for (Point point : wider) {

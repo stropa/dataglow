@@ -8,6 +8,14 @@ public class Report {
     private String periodUnits;
     private Long lastBuildTime;
 
+    private boolean useCache;
+    private boolean cacheAll;
+    private String cacheMask;
+    private int maxCacheAge;
+    private String maxCacheAgeUnits;
+
+    private boolean analyzeAll;
+
 
     public Report(String name, String query, int period, String periodUnits) {
         this.name = name;
@@ -63,5 +71,53 @@ public class Report {
 
     public void setLastBuildTime(Long lastBuildTime) {
         this.lastBuildTime = lastBuildTime;
+    }
+
+    public boolean isUseCache() {
+        return useCache;
+    }
+
+    public void setUseCache(boolean useCache) {
+        this.useCache = useCache;
+    }
+
+    public boolean isCacheAll() {
+        return cacheAll;
+    }
+
+    public void setCacheAll(boolean cacheAll) {
+        this.cacheAll = cacheAll;
+    }
+
+    public String getCacheMask() {
+        return cacheMask;
+    }
+
+    public void setCacheMask(String cacheMask) {
+        this.cacheMask = cacheMask;
+    }
+
+    public int getMaxCacheAge() {
+        return maxCacheAge;
+    }
+
+    public void setMaxCacheAge(int maxCacheAge) {
+        this.maxCacheAge = maxCacheAge;
+    }
+
+    public String getMaxCacheAgeUnits() {
+        return maxCacheAgeUnits;
+    }
+
+    public void setMaxCacheAgeUnits(String maxCacheAgeUnits) {
+        this.maxCacheAgeUnits = maxCacheAgeUnits;
+    }
+
+    public boolean isAnalyzeAll() {
+        return analyzeAll;
+    }
+
+    public void setAnalyzeAll(boolean analyzeAll) {
+        this.analyzeAll = analyzeAll;
     }
 }

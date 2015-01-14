@@ -3,7 +3,7 @@ package ru.rbs.stats.data;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
 import org.testng.annotations.Test;
-import ru.rbs.stats.context.DataSourceConfig;
+import ru.rbs.stats.context.TestDataSourceConfig;
 import ru.rbs.stats.store.CubeDescription;
 
 import javax.annotation.Resource;
@@ -15,7 +15,7 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 import static ru.rbs.stats.store.CubeDescription.CubeDataType;
 
-@ContextConfiguration(classes = DataSourceConfig.class)
+@ContextConfiguration(classes = TestDataSourceConfig.class)
 
 public class SQLCubeDescriptionParserTest extends AbstractTestNGSpringContextTests {
 

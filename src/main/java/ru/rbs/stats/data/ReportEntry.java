@@ -1,11 +1,12 @@
 package ru.rbs.stats.data;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class ReportEntry {
 
-    private List profile;
-    private List<Number> aggregates;
+    private List profile = new ArrayList();
+    private List<Number> aggregates = new ArrayList<Number>();
 
     public ReportEntry() {}
 
