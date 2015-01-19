@@ -5,6 +5,7 @@ import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import ru.rbs.stats.configuration.SystemProperties;
 import ru.rbs.stats.store.CubeDescription;
 import schemacrawler.schema.*;
 import schemacrawler.schemacrawler.InclusionRule;
@@ -19,14 +20,12 @@ import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static java.util.Arrays.asList;
 import static org.apache.commons.lang.StringUtils.*;
 import static ru.rbs.stats.configuration.SystemProperties.SCHEMA;
-import static schemacrawler.schema.JavaSqlType.JavaSqlTypeGroup;
 
 @Service
 public class SQLCubeDescriptionParser {
@@ -37,10 +36,7 @@ public class SQLCubeDescriptionParser {
     private DataSource dataSource;
 
     @Resource(name = "systemProperties")
-    private Properties properties;
-
-    @Resource(name = "settings")
-    private Properties settings;
+    private SystemProperties systemProperties;
 
     private String schemaName;
 
@@ -52,7 +48,7 @@ public class SQLCubeDescriptionParser {
         options.setSchemaInfoLevel(SchemaInfoLevel.standard());
         //options.setTableNamePattern("bpc*");
         final Connection connection = dataSource.getConnection();
-        schemaName = settings.getProperty(SCHEMA);
+        schemaName = systemProperties.getProperty(SCHEMA);
         options.setSchemaInclusionRule(new InclusionRule() {
             @Override
             public boolean test(String s) {
@@ -123,13 +119,13 @@ public class SQLCubeDescriptionParser {
 
             Schema schema = catalog.getSchema(schemaName);
             // TODO: handle name cases and quotation for different database vendors
-            Table table = catalog.getTable(schema, tableName.toUpperCase());
-            Column column = table.getColumn(substringAfter(columnName, ".").toUpperCase());
+            Table table = getTable(tableName, schema);
+            Column column = getColumn(substringAfter(columnName, "."), table);
 
-            String name = column.getColumnDataType().getLocalTypeName().toUpperCase();
+            String name = column.getColumnDataType().getName().toUpperCase();
             // TODO: discover types correctly
-            if (asList("NUMBER", "BIGINT", "INTEGER", "SMALLINT", "SMALLSERIAL", "BIGSERIAL", "SERIAL")
-                    .contains(name)) {
+            if (column.getColumnDataType().getJavaSqlType().getJavaSqlTypeGroup() == JavaSqlType.JavaSqlTypeGroup.integer
+                    || asList("NUMBER", "BIGINT", "INTEGER", "SMALLINT", "SMALLSERIAL", "BIGSERIAL", "SERIAL").contains(name)) {
                 return CubeDescription.CubeDataType.INTEGER;
             } else if (asList("DECIMAL", "NUMERIC", "REAL", "DOUBLE PRECISION").contains(name)) {
                 return CubeDescription.CubeDataType.FLOAT;
@@ -154,6 +150,22 @@ public class SQLCubeDescriptionParser {
             logger.error("Can't discover column type for field " + columnName, e);
         }
         return CubeDescription.CubeDataType.STRING;
+    }
+
+    private Column getColumn(String columnName, Table table) {
+        Column column = table.getColumn(columnName);
+        if (column == null) {
+            column = table.getColumn(columnName.toUpperCase());
+        }
+        return column;
+    }
+
+    private Table getTable(String tableName, Schema schema) {
+        Table table = catalog.getTable(schema, tableName);
+        if (table == null) {
+            table = catalog.getTable(schema, tableName.toUpperCase());
+        }
+        return table;
     }
 
     String getTableNameForColumn(String column, String query) {
