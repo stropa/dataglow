@@ -1,8 +1,11 @@
 package ru.rbs.stats.context;
 
 import com.jolbox.bonecp.BoneCPDataSource;
+import org.springframework.beans.factory.config.PropertiesFactoryBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.ClassPathResource;
+import ru.rbs.stats.configuration.SystemProperties;
 import ru.rbs.stats.data.SQLCubeDescriptionParser;
 
 import javax.sql.DataSource;
@@ -24,6 +27,18 @@ public class TestDataSourceConfig {
     @Bean
     public SQLCubeDescriptionParser getSqlCubeDescriptionParser() {
         return new SQLCubeDescriptionParser();
+    }
+
+    @Bean(name = "systemProperties")
+    public SystemProperties getSystemProperties() {
+        return new SystemProperties();
+    }
+
+    @Bean(name = "settings")
+    public PropertiesFactoryBean getProperties() {
+        PropertiesFactoryBean props = new PropertiesFactoryBean();
+        props.setLocations(new ClassPathResource("test.config.properties"));
+        return props;
     }
 
 }

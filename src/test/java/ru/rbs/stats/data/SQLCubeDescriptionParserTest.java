@@ -17,6 +17,7 @@ import static ru.rbs.stats.store.CubeDescription.CubeDataType;
 
 @ContextConfiguration(classes = TestDataSourceConfig.class)
 
+// TODO: add integration tests for Oracle
 public class SQLCubeDescriptionParserTest extends AbstractTestNGSpringContextTests {
 
     @Resource
@@ -50,7 +51,7 @@ public class SQLCubeDescriptionParserTest extends AbstractTestNGSpringContextTes
 
     @Test
     public void testSelectType() throws SQLException {
-        CubeDataType cubeDataType = sqlCubeDescriptionParser.selectType("merchantlogin", QUERY);
+        CubeDataType cubeDataType = sqlCubeDescriptionParser.selectType("m.merchantlogin", QUERY);
         assertEquals(cubeDataType, CubeDataType.STRING);
 
         cubeDataType = sqlCubeDescriptionParser.selectType("count(*)", QUERY);
