@@ -1,0 +1,26 @@
+<div class="row">
+    <table class="table">
+        <thead>
+        <tr>
+            <th>Cube</th>
+            <th>Coordinates</th>
+            <th>Variable</th>
+            <th>Time</th>
+            <th>Name</th>
+            <th>Description</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr ng-repeat="artifact in artifacts">
+            <td>{{artifact.cubeCoordinates.cubeName}}</td>
+            <td>
+                <div ng-repeat="dim in artifact.cubeCoordinates.profile">{{dim}}</div>
+            </td>
+            <td>{{artifact.cubeCoordinates.varName}}</td>
+            <td>{{artifact.timeStart}}</td>
+            <td>{{artifact.name}}</td>
+            <td>{{artifact.description}}</td>
+        </tr>
+        </tbody>
+    </table>
+</div>

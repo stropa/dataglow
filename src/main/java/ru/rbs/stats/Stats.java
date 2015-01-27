@@ -8,16 +8,19 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.util.PatternMatchUtils;
+import ru.rbs.stats.analyze.Artifact;
 import ru.rbs.stats.analyze.TimeSeriesAnalyzeConfig;
 import ru.rbs.stats.analyze.alg.TripleSigmaRule;
 import ru.rbs.stats.data.*;
 import ru.rbs.stats.data.cache.CachedSerieContainer;
+import ru.rbs.stats.service.ArtifactsService;
 import ru.rbs.stats.store.CubeCoordinates;
 import ru.rbs.stats.store.CubeDescription;
 import ru.rbs.stats.store.CubeSchemaProvider;
 import ru.rbs.stats.utils.CompositeName;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.Resource;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -33,6 +36,9 @@ public class Stats implements CubeSchemaProvider {
 
     @Autowired
     private InfluxDB influxDB;
+
+    @Resource
+    private ArtifactsService artifactsService;
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
@@ -101,17 +107,32 @@ public class Stats implements CubeSchemaProvider {
 
     private void runOnlineAnalyzers(ReportParams config, Report report, LocalDateTime periodStart, LocalDateTime periodEnd) {
         if (config.isAnalyzeAll()) {
-            CachedSerieDataProvider provider =  new CachedSerieDataProvider(cachedSeries);
+            CachedSerieDataProvider provider = new CachedSerieDataProvider(cachedSeries);
             for (ReportEntry entry : report.getEntries()) {
                 for (String aggregateName : report.getCubeDescription().getAgregates()) {
+                    CubeCoordinates coordinates = coordinatesForEntry(entry, report.getCubeDescription());
+                    coordinates.setVarName(aggregateName);
+
                     CompositeName serieName = buildSerieName(entry, report.getCubeDescription());
                     serieName = serieName.withPart(aggregateName);
                     provider.setSerieName(serieName);
                     // TODO: make Analyzers (algorithms) selectable for report
-                    new TripleSigmaRule(30).apply(provider, periodStart, periodEnd);
+                    List<Artifact> artifacts = new TripleSigmaRule(30).apply(provider, periodStart, periodEnd);
+                    artifacts.forEach(a -> {
+                        a.setCoordinates(coordinates);
+                        artifactsService.persist(a);
+                    });
                 }
             }
         }
+    }
+
+    private CubeCoordinates coordinatesForEntry(ReportEntry entry, CubeDescription cubeDescription) {
+        CubeCoordinates coordinates = new CubeCoordinates(cubeDescription.getName());
+        for (int i = 0; i < cubeDescription.getDimensions().size(); i++) {
+            coordinates.setAxis(cubeDescription.getDimensions().get(i), entry.getProfile().get(i));
+        }
+        return coordinates;
     }
 
     private void updateCache(Report report, LocalDateTime time, ReportParams reportParams) {
