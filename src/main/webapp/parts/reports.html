@@ -1,0 +1,120 @@
+<div class="row row-offcanvas row-offcanvas-right">
+    <div class="col-xs-12 col-sm-9">
+        <div class="row">
+            <div class="container">
+                <button type="button" class="btn btn-link" ng-click="startCreating()">
+                    <span class="glyphicon glyphicon-plus"></span>Create New Report
+                </button>
+                <form class="report-edit-form" ng-show="isCreating" ng-submit="createNewReport(newReport)">
+                    <!--<label class="form-label">Create report from SQL</label>-->
+                    <div class="row">
+                        <div class="col-xs-8 form-group">
+                            <div class="form-group">
+                                <label class="form-label">Name</label>
+                                <input class="form-control" type="text" ng-model="newReport.name"/>
+                            </div>
+                            <div class="form-group ">
+                                <label class="form-label">Query</label>
+                                    <textarea ng-model="newReport.query" class="form-control" name="sql" rows="5"
+                                              placeholder="select a, b, count(c), sum(d) from data_table group by a,b"></textarea>
+                            </div>
+                        </div>
+                        <div class="col-xs-4">
+                            <div class="form-group">
+                                <label class="form-label">Scheduling</label>
+                                <select class="form-control" ng-model="newReport.periodType" name="period_type">
+                                    <option>Periodical</option>
+                                    <option>On Demand</option>
+                                </select>
+                            </div>
+                            <hr>
+                            <div class="form-group form-inline">
+                                <label class="form-label">Period:</label>
+                                <input type="text" ng-model="newReport.period" size="1" class="form-control"
+                                       value="1"/>
+                                <select class="form-control" ng-model="newReport.periodUnits" name="period_units">
+                                    <option>MINUTES</option>
+                                    <option>HOURS</option>
+                                    <option>DAYS</option>
+                                    <!--<option>WEEKS</option>-->
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-xs-12">
+                            <div class="form-group">
+                                <label class="form-label">Use Cache</label>
+                                <input type="checkbox" ng-model="newReport.useCache"/>
+                                    <span ng-show="newReport.useCache">
+                                        <label class="form-label">Cache All</label>
+                                        <input type="checkbox" ng-model="newReport.cacheAll"/>
+                                        <span ng-show="!newReport.cacheAll">
+                                            <label class="form-label" ng-disabled="newReport.cacheAll">Cache mask</label>
+                                            <input type="text" ng-model="newReport.cacheMask" ng-disabled="newReport.cacheAll"/>
+                                        </span>
+                                        <span class="form-group form-inline">
+                                            <label class="form-label">Cache Max Age:</label>
+                                            <input type="text" ng-model="newReport.maxCacheAge" size="1" class="form-control"
+                                                   value="1"/>
+                                            <select class="form-control" ng-model="newReport.maxCacheAgeUnits" name="period_units">
+                                                <option>MINUTES</option>
+                                                <option selected="selected">HOURS</option>
+                                                <option>DAYS</option>
+                                                <!--<option>WEEKS</option>-->
+                                            </select>
+                                        </span>
+                                        <span ng-show="newReport.useCache">
+                                            <label class="form-label">Analyze All</label>
+                                        <input type="checkbox" ng-model="newReport.analyzeAll"/>
+                                        </span>
+                                    </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-xs-12">
+                            <div class="form-group form-inline">
+                                <button type="submit" class="btn btn-primary">Create</button>
+                                <button type="button" ng-click="stopCreation()" class="btn btn-default">Dismiss</button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <!--/span-->
+            <!--/span-->
+            <!--/span-->
+            <!--/span-->
+            <!--/span-->
+            <!--/span-->
+        </div>
+        <!--/row-->
+    </div>
+    <!--/span-->
+
+    <div class="row">
+        <table class="table">
+            <thead>
+            <tr>
+                <th>Report Name</th>
+                <th>Period</th>
+                <th>Last Build</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr ng-repeat="report in reports">
+                <td>{{report.name}}</td>
+                <td>{{report.period}} {{report.periodUnits}}</td>
+                <td>{{report.lastBuildTime | date:'dd-M-yyyy H:mm'}}</td>
+            </tr>
+            <!--<tr>
+                <td>merchant_minute_counts</td>
+                <td>1 MINUTE</td>
+                <td>21/12/2014 14:01</td>
+            </tr>-->
+            </tbody>
+        </table>
+    </div>
+
+</div>

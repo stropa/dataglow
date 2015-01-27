@@ -188,6 +188,23 @@
                             <includes>.*</includes>
                             <excludes></excludes>
                             <inputSchema>public</inputSchema>
+
+                            <customTypes>
+                                <customType>
+                                    <name>CubeCoordinates</name>
+                                    <type>ru.rbs.stats.store.CubeCoordinates</type>
+                                    <converter>ru.rbs.stats.model.convert.CubeCoordinatesJsonStringConverter</converter>
+                                </customType>
+                            </customTypes>
+
+                            <forcedTypes>
+                                <forcedType>
+                                    <name>CubeCoordinates</name>
+                                    <expression>cube_coordinates</expression>
+                                    <types>.*</types>
+                                </forcedType>
+                            </forcedTypes>
+
                         </database>
                         <target>
                             <packageName>ru.rbs.stats.model</packageName>
