@@ -38,7 +38,7 @@ public class TripleSigmaRule implements Algorithm {
         }
         double stdev = stats.getStandardDeviation();
         double mean = stats.getMean();
-        logger.debug("Mean: " + mean + " stdev: " + stdev);
+        logger.trace("Mean: " + mean + " stdev: " + stdev);
         for (Point point : points) {
             if (Math.abs(point.getValue() - mean) > stdev * 3) {
                 results.add(new Artifact(point.getTimestamp(), "3sigm"));

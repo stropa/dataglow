@@ -13,6 +13,7 @@ public class Report {
     private String cacheMask;
     private int maxCacheAge;
     private String maxCacheAgeUnits;
+    private long maxCacheSize;
 
     private boolean analyzeAll;
 
@@ -119,5 +120,13 @@ public class Report {
 
     public void setAnalyzeAll(boolean analyzeAll) {
         this.analyzeAll = analyzeAll;
+    }
+
+    public long getMaxCacheSize() {
+        return maxCacheSize;
+    }
+
+    public void setMaxCacheSize(long maxCacheSize) {
+        this.maxCacheSize = maxCacheSize;
     }
 }

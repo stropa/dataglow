@@ -83,19 +83,21 @@ public class ReportsController {
             if (report.getMaxCacheAgeUnits() != null && report.getMaxCacheAge() > 0) {
                 params.setCacheAge(Duration.of(report.getMaxCacheAge(), ChronoUnit.valueOf(report.getMaxCacheAgeUnits())));
             } else {
-                params.setCacheAge(Duration.ofHours(1));
+                //params.setCacheAge(Duration.ofHours(1));
             }
+            params.setMaxCacheSize(report.getMaxCacheSize() > 0 ? report.getMaxCacheAge() : -1);
         }
         params.setAnalyzeAll(report.isAnalyzeAll());
 
         params.setJob(new Runnable() {
             @Override
             public void run() {
-                stats.calculateAndReportStats(params, false);
+                stats.process(params, false, null, null, true, "*");
             }
         });
         stats.getReportBuilders().put(report.getName(), new SQLReportBuilder(jdbcTemplate));
         reportSchedulingConfiguration.getReports().add(params);
+        logger.info("Added new report: " + report);
     }
 
 }

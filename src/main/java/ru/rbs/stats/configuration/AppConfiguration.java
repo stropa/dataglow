@@ -6,10 +6,12 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.io.ClassPathResource;
+import ru.rbs.stats.configuration.dev.TestDatabaseConfiguration;
 
 @Configuration
 @Import({
         DatabaseConfiguration.class,
+        TestDatabaseConfiguration.class,
         JooqDaosConfiguration.class,
         MvcConfiguration.class,
         StatsReportSchedulingConfiguration.class

@@ -12,7 +12,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 import ru.rbs.stats.Stats;
 import ru.rbs.stats.data.ReportParams;
 
-import javax.annotation.PostConstruct;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -40,31 +39,16 @@ public class StatsReportSchedulingConfiguration {
         return new Stats();
     }
 
-    @PostConstruct
-    public void init() {
-        final ReportParams merchantDailyCounts = new ReportParams("merchantDailyCounts", "1 MINUTES");
-        merchantDailyCounts.setCubeDescription(stats.getMetricsRegistry().getCubes().get("merchant.operation.actionCode"));
-        merchantDailyCounts.setJob(new Runnable() {
-            @Override
-            public void run() {
-                stats.calculateAndReportStats(merchantDailyCounts, false);
-            }
-        });
-        //reports.add(merchantDailyCounts);
-    }
 
     @Scheduled(fixedRate = 1000)
     public void timeToWork() {
         runJobs(reports);
-        //runJobs(stats.getMetricsRegistry().getAnalyzers());
     }
 
     private void runJobs(Collection<? extends Schedulable> jobConfigs) {
         for (Schedulable config : jobConfigs) {
             LocalDateTime now = LocalDateTime.now();
 
-            //for debug
-            //now = now.minusDays(39);
 
             if (config.getLastRun() == null) config.setLastRun(now.minusSeconds(config.getPeriodSeconds()));
             if (now.isAfter(config.getLastRun().plusSeconds(config.getPeriodSeconds()))) {

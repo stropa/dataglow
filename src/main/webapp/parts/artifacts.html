@@ -1,3 +1,8 @@
+<script type="text/javascript">
+
+</script>
+
+<div class="row, render-chart-here"></div>
 <div class="row">
     <table class="table">
         <thead>
@@ -20,6 +25,10 @@
             <td>{{artifact.timeStart}}</td>
             <td>{{artifact.name}}</td>
             <td>{{artifact.description}}</td>
+            <td>
+                <!--<div display="none" id="artifa">{{artifact}}</div>-->
+                <button  type="button"  ng-click="showChartForArtifact(artifact);" class="btn btn-default">Chart</button>
+            </td>
         </tr>
         </tbody>
     </table>

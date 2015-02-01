@@ -54,7 +54,7 @@
                                             <input type="text" ng-model="newReport.cacheMask" ng-disabled="newReport.cacheAll"/>
                                         </span>
                                         <span class="form-group form-inline">
-                                            <label class="form-label">Cache Max Age:</label>
+                                            <label class="form-label">Max Cached Age:</label>
                                             <input type="text" ng-model="newReport.maxCacheAge" size="1" class="form-control"
                                                    value="1"/>
                                             <select class="form-control" ng-model="newReport.maxCacheAgeUnits" name="period_units">
@@ -63,6 +63,10 @@
                                                 <option>DAYS</option>
                                                 <!--<option>WEEKS</option>-->
                                             </select>
+                                        </span>
+                                        <span class="form-group form-inline">
+                                            <label class="form-control">Max Cache Size</label>
+                                            <input type="number" ng-model="newReport.maxCacheElements"/>
                                         </span>
                                         <span ng-show="newReport.useCache">
                                             <label class="form-label">Analyze All</label>
