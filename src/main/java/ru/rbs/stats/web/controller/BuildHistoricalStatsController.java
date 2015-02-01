@@ -4,22 +4,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import ru.rbs.stats.Stats;
 import ru.rbs.stats.configuration.StatsReportSchedulingConfiguration;
-import ru.rbs.stats.data.Report;
 import ru.rbs.stats.data.ReportParams;
 import ru.rbs.stats.data.StatsReportBuilder;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
-import static java.time.LocalDateTime.now;
-
-@Controller
+@RestController
 @RequestMapping("/historical")
 public class BuildHistoricalStatsController {
 
@@ -34,7 +31,9 @@ public class BuildHistoricalStatsController {
     @RequestMapping(value = "/build", method = RequestMethod.POST)
     public String buildHistoricalStats(@RequestParam String report,
                                        @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime from,
-                                       @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime to) {
+                                       @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime to,
+                                       @RequestParam Boolean cache,
+                                       @RequestParam String whatToAnalyze) {
 
         List<ReportParams> configs = statsReportSchedulingConfiguration.getReports();
         ReportParams reportParams = null;
@@ -45,26 +44,8 @@ public class BuildHistoricalStatsController {
         StatsReportBuilder reportBuilder = stats.getReportBuilders().get(reportParams.getReportName());
         if (reportBuilder == null) return "no builder";
 
-        /*LocalDateTime from = LocalDateTime.ofInstant(Instant.ofEpochMilli(fromDate.getTime()), TimeZone.getDefault().toZoneId());
-        LocalDateTime to = LocalDateTime.ofInstant(Instant.ofEpochMilli(toDate.getTime()), TimeZone.getDefault().toZoneId());*/
+        stats.process(reportParams, false, from, to, cache != null && cache, whatToAnalyze);
 
-        LocalDateTime periodStart = from;
-        if (to == null) to = now();
-        long periodSeconds = reportParams.getPeriodSeconds();
-        LocalDateTime periodEnd = from.plusSeconds(periodSeconds);
-        // for historical reports periodEnd must be in past more farther than in one period
-        int part = 1;
-        while (periodEnd.isBefore(to.minusSeconds(periodSeconds))) {
-            // build report for next period part
-            Report reportEntries = reportBuilder.buildReport(reportParams,
-                    part > 1 ? periodStart.plusNanos(1000) : periodStart, periodEnd);
-            logger.debug("Sending page {} of {} entries", part, reportEntries.getEntries().size());
-            stats.sendToStorage(reportEntries, periodEnd);
-            periodEnd = periodEnd.plusSeconds(periodSeconds);
-            periodStart = periodStart.plusSeconds(periodSeconds);
-            part++;
-
-        }
 
         return "done";
     }

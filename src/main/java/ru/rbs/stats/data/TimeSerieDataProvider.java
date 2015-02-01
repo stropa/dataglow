@@ -9,4 +9,6 @@ public interface TimeSerieDataProvider {
 
     List<Point> get(LocalDateTime periodStart, LocalDateTime periodEnd);
 
+    String getSerieName();
+
 }

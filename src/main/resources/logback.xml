@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<configuration scan="true">
+
+
+    <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <!--<pattern>%p %c: %m%n</pattern>-->
+            <pattern>%date [%thread] %-5level %logger:%line - %message %mdc{MDC_TEXT} %mdc{ORASID} %n</pattern>
+        </encoder>
+    </appender>
+
+
+    <appender name="console_ASYNC" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="console"/>
+        <queueSize>1000</queueSize>
+        <includeCallerData>true</includeCallerData>
+    </appender>
+
+    <!-- Instead of class="ch.qos.logback.classic.net.SMTPAppender"> -->
+
+    <root level="DEBUG">
+        <appender-ref ref="console_ASYNC"/>
+    </root>
+
+    <logger name="org.springframework" level="WARN"/>
+    <logger name="org.dbunit" level="WARN"/>
+
+
+</configuration>

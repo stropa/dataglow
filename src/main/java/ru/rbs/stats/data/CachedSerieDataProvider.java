@@ -42,8 +42,8 @@ public class CachedSerieDataProvider implements TimeSerieDataProvider {
         this.cachedSeries = cachedSeries;
     }
 
-    public CompositeName getSerieName() {
-        return serieName;
+    public String getSerieName() {
+        return serieName.format();
     }
 
     public void setSerieName(CompositeName serieName) {

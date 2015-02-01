@@ -7,6 +7,7 @@ import org.jooq.impl.DefaultDSLContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.lookup.JndiDataSourceLookup;
 
@@ -31,6 +32,7 @@ public class DatabaseConfiguration {
     }
 
     @Bean(name = "dataSource")
+    @Profile("!embedded-test-database")
     public DataSource getDataSource() {
         final JndiDataSourceLookup dsLookup = new JndiDataSourceLookup();
         dsLookup.setResourceRef(true);
@@ -49,7 +51,7 @@ public class DatabaseConfiguration {
         return new DefaultDSLContext(appDataSource, systemProperties.getJooqSQLDialect());
     }
 
-    @Bean
+    @Bean(name = "jdbcTemplate")
     public JdbcTemplate getJdbcTemplate() {
         return new JdbcTemplate(dataSource);
     }

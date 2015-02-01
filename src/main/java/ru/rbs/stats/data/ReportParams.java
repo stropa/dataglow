@@ -20,6 +20,7 @@ public class ReportParams extends AbstractSchedulableJob {
     private boolean cacheAll;
     private String cacheMask;
     private Duration cacheAge;
+    private long maxCacheSize;
     private boolean analyzeAll;
 
 
@@ -128,5 +129,13 @@ public class ReportParams extends AbstractSchedulableJob {
 
     public void setAnalyzeAll(boolean analyzeAll) {
         this.analyzeAll = analyzeAll;
+    }
+
+    public long getMaxCacheSize() {
+        return maxCacheSize;
+    }
+
+    public void setMaxCacheSize(long maxCacheSize) {
+        this.maxCacheSize = maxCacheSize;
     }
 }

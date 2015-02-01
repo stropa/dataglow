@@ -3,15 +3,20 @@ package ru.rbs.stats.data.cache;
 import java.time.LocalDateTime;
 import java.util.NavigableMap;
 import java.util.TreeMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class CachedSerieContainer {
 
     String serieName;
+    AtomicLong counter;
+    long maxSize = -1;
+
     NavigableMap<LocalDateTime, Number> serie = new TreeMap<LocalDateTime, Number>();
 
 
-    public CachedSerieContainer(String serieName) {
+    public CachedSerieContainer(String serieName, long maxSize) {
         this.serieName = serieName;
+        this.maxSize = maxSize;
     }
 
     public String getSerieName() {
@@ -31,6 +36,9 @@ public class CachedSerieContainer {
     }
 
     public void putValue(LocalDateTime dateTime, Number val) {
+        if (maxSize > 0 && counter.get() >= maxSize) {
+            serie.pollFirstEntry();
+        }
         serie.put(dateTime, val);
     }
 

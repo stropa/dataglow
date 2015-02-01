@@ -29,6 +29,8 @@ import java.time.chrono.ChronoZonedDateTime;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
+import static org.apache.commons.lang.StringUtils.isNotBlank;
+
 public class Stats implements CubeSchemaProvider {
 
     private static final Logger logger = LoggerFactory.getLogger(Stats.class);
@@ -82,30 +84,44 @@ public class Stats implements CubeSchemaProvider {
     }
 
 
-    public void calculateAndReportStats(ReportParams config, boolean unscheduled) {
+    public void process(ReportParams config, boolean unscheduled, LocalDateTime from, LocalDateTime to,
+                        boolean cache, String whatToAnalyze) {
         StatsReportBuilder reportBuilder = reportBuilders.get(config.getReportName());
         if (reportBuilder == null) {
             logger.error("No StatsReportBuilder for name {}", config.getReportName());
             return;
         }
-        LocalDateTime periodStart = config.getLastRun();
-        LocalDateTime periodEnd = config.getLastRun().plusSeconds(config.getPeriodSeconds());
-        logger.debug("It's " + LocalDateTime.now() + " now and we are going to fetch stats report from " + periodStart + " to " + periodEnd);
-        if (!unscheduled) {
-            config.setLastRun(periodEnd);
+        long periodSeconds = config.getPeriodSeconds();
+        LocalDateTime nextPeriodStart = from == null ? config.getLastRun() : from;
+        LocalDateTime nextPeriodEnd = nextPeriodStart.plusSeconds(periodSeconds);
+        LocalDateTime end = to == null ? nextPeriodEnd : to;
+
+        int part = 1;
+        while (nextPeriodEnd.isBefore(end.minusSeconds(periodSeconds))) {
+            // build report for next period part
+            logger.debug("It's " + LocalDateTime.now() + " now and we are going to fetch stats report from " + nextPeriodStart + " to " + nextPeriodEnd);
+            Report report = reportBuilder.buildReport(config, part > 1 ? nextPeriodStart.plusNanos(1000) : nextPeriodStart, nextPeriodEnd);
+            if (!unscheduled) {
+                config.setLastRun(nextPeriodEnd);
+            }
+            if (cache) {
+                updateCache(report, nextPeriodEnd, config);
+            }
+            if (isNotBlank(whatToAnalyze)) {
+                runOnlineAnalyzers(config, report, nextPeriodStart, nextPeriodEnd, whatToAnalyze);
+            }
+
+            sendToStorage(report, nextPeriodEnd);
+
+            nextPeriodEnd = nextPeriodEnd.plusSeconds(periodSeconds);
+            nextPeriodStart = nextPeriodStart.plusSeconds(periodSeconds);
+            part++;
+
         }
-
-        Report report = reportBuilder.buildReport(config, periodStart, periodEnd);
-
-        updateCache(report, periodEnd, config);
-
-        runOnlineAnalyzers(config, report, periodStart, periodEnd);
-
-        sendToStorage(report, periodEnd);
 
     }
 
-    private void runOnlineAnalyzers(ReportParams config, Report report, LocalDateTime periodStart, LocalDateTime periodEnd) {
+    private void runOnlineAnalyzers(ReportParams config, Report report, LocalDateTime periodStart, LocalDateTime periodEnd, String whatToAnalyze) {
         if (config.isAnalyzeAll()) {
             CachedSerieDataProvider provider = new CachedSerieDataProvider(cachedSeries);
             for (ReportEntry entry : report.getEntries()) {
@@ -147,7 +163,7 @@ public class Stats implements CubeSchemaProvider {
                                 && PatternMatchUtils.simpleMatch(reportParams.getCacheMask(), serieName.format()))) {
                     CachedSerieContainer container = cachedSeries.get(serieName);
                     if (container == null) {
-                        container = new CachedSerieContainer(serieName.format());
+                        container = new CachedSerieContainer(serieName.format(), reportParams.getMaxCacheSize());
                         cachedSeries.put(serieName, container);
                     }
                     container.putValue(time, entry.getAggregates().get(report.getCubeDescription().getAgregates().indexOf(aggregateName)));
@@ -158,6 +174,9 @@ public class Stats implements CubeSchemaProvider {
     }
 
     private void cleanExpiredCacheEntries(Duration cacheAge) {
+        if (cacheAge == null) {
+            return;
+        }
         for (CompositeName serieName : cachedSeries.keySet()) {
             List<LocalDateTime> toRemove = new ArrayList<LocalDateTime>();
             SortedMap<LocalDateTime, Number> serie = cachedSeries.get(serieName).getSerie();
@@ -178,6 +197,15 @@ public class Stats implements CubeSchemaProvider {
         for (Object dimensionValue : entry.getProfile()) {
             name = name.withPart(dimensionValue.toString());
         }
+        return name;
+    }
+
+    public static CompositeName buildSerieName(CubeCoordinates coordinates) {
+        CompositeName name = CompositeName.fromParts(coordinates.getCubeName());
+        for (Object dimensionValue : coordinates.getProfile().values()) {
+            name = name.withPart(dimensionValue.toString());
+        }
+        name = name.withPart(coordinates.getVarName());
         return name;
     }
 
@@ -217,5 +245,9 @@ public class Stats implements CubeSchemaProvider {
     @Override
     public CubeDescription getCubeSchema(String cubeName) {
         return metricsRegistry.getCubes().get(cubeName);
+    }
+
+    public Map<CompositeName, CachedSerieContainer> getCachedSeries() {
+        return cachedSeries;
     }
 }

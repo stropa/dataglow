@@ -19,7 +19,8 @@ controllers.controller('ReportsController', ['$scope', 'ReportsDataSource', func
             period: null,
             periodUnits: null,
             useCache: false,
-            analyzeAll: false
+            analyzeAll: false,
+            maxCacheSize: -1
         }
     }
 
@@ -50,5 +51,12 @@ controllers.controller('ReportsController', ['$scope', 'ReportsDataSource', func
 controllers.controller('ArtifactsController', ['$scope', 'ArtifactsDataSource', function($scope, ArtifactsDataSource) {
 
     $scope.artifacts = ArtifactsDataSource.query();
+
+    function showChartForArtifact(artifact) {
+        console.log("GOTCHA!!!");
+        createChartForArtifact(artifact);
+    }
+
+    $scope.showChartForArtifact = showChartForArtifact;
 
 }]);

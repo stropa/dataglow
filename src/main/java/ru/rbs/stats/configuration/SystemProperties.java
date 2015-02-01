@@ -14,10 +14,10 @@ public class SystemProperties {
     private Properties settings;
 
     public static final String SCHEMA = "schema";
-    public static final String DATABASE_USED = "database.used";
+    public static final String DATA_SOURCE_DATABASE_TYPE = "data.source.database.type";
 
     public SQLDialect getJooqSQLDialect() {
-        switch (getDatabaseUsed()) {
+        switch (getApplicationDatabaseType()) {
             case PostgreSQL:
                 return SQLDialect.POSTGRES;
             case Oracle:
@@ -27,15 +27,21 @@ public class SystemProperties {
                     return SQLDialect.ORACLE11G;
                 } else if (settings.getProperty("database.version").contains("12")) {
                     return SQLDialect.ORACLE12C;
-                }
+                } return SQLDialect.ORACLE;
+            case HSQLDB:
+                return SQLDialect.HSQLDB;
             default:
                 return SQLDialect.SQL99;
         }
     }
 
 
-    public DatabaseUsed getDatabaseUsed() {
-        return DatabaseUsed.valueOf(settings.getProperty(DATABASE_USED));
+    public DatabaseUsed getDataSourceDatabaseType() {
+        return DatabaseUsed.valueOf(settings.getProperty(DATA_SOURCE_DATABASE_TYPE));
+    }
+
+    public DatabaseUsed getApplicationDatabaseType() {
+        return DatabaseUsed.valueOf(settings.getProperty("app.database.type"));
     }
 
     public String getProperty(String name) {

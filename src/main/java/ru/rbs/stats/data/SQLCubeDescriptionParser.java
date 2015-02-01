@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import ru.rbs.stats.configuration.SystemProperties;
+import ru.rbs.stats.configuration.options.DatabaseUsed;
 import ru.rbs.stats.store.CubeDescription;
 import schemacrawler.schema.*;
 import schemacrawler.schemacrawler.InclusionRule;
@@ -52,15 +53,21 @@ public class SQLCubeDescriptionParser {
         options.setSchemaInclusionRule(new InclusionRule() {
             @Override
             public boolean test(String s) {
-                return StringUtils.equalsIgnoreCase(s, schemaName);
+                boolean b = StringUtils.equalsIgnoreCase(s, schemaName);
+                logger.debug("Schema " + s + " will " + (b ? "" : "NOT") + " be retrieved");
+                return b;
             }
         });
         options.setTableInclusionRule(new InclusionRule() {
             @Override
             public boolean test(String s) {
-                boolean b = StringUtils.containsIgnoreCase(s, "bpc");
-                logger.debug("Now on table: " + s + "will retrieve: " + b);
-                return b;
+                if (systemProperties.getDataSourceDatabaseType() == DatabaseUsed.Oracle) {
+                    boolean shouldInclude = StringUtils.containsIgnoreCase(s, "bpc");
+                    logger.debug("Now on table: " + s + "will retrieve: " + shouldInclude);
+                    return shouldInclude;
+                } else {
+                    return true;
+                }
             }
         });
         options.setRoutineTypes(Collections.<RoutineType>emptyList());
