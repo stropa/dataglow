@@ -34,8 +34,6 @@ public class TestDatabaseConfiguration {
         BoneCPDataSource dataSource = new BoneCPDataSource();
         dataSource.setJdbcUrl("jdbc:hsqldb:file:hsqldb/testdata");
         dataSource.setDriverClass("org.hsqldb.jdbc.JDBCDriver");
-        //dataSource.setPassword("rbs");
-        //dataSource.setUser("rbs");
         return dataSource;
     }
 

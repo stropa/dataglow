@@ -1,5 +1,6 @@
 package ru.rbs.stats.configuration;
 
+import com.jolbox.bonecp.BoneCPDataSource;
 import org.influxdb.InfluxDB;
 import org.influxdb.InfluxDBFactory;
 import org.jooq.DSLContext;
@@ -41,9 +42,10 @@ public class DatabaseConfiguration {
 
     @Bean(name = "appDataSource")
     public DataSource getAppDataSource() {
-        final JndiDataSourceLookup dsLookup = new JndiDataSourceLookup();
-        dsLookup.setResourceRef(true);
-        return dsLookup.getDataSource("jdbc/GlowSelfDataSource");
+        BoneCPDataSource dataSource = new BoneCPDataSource();
+        dataSource.setJdbcUrl("jdbc:hsqldb:file:hsqldb/appdata");
+        dataSource.setDriverClass("org.hsqldb.jdbc.JDBCDriver");
+        return dataSource;
     }
 
     @Bean
