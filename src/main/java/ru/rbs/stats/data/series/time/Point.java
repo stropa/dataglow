@@ -1,18 +1,26 @@
 package ru.rbs.stats.data.series.time;
 
+import ru.rbs.stats.utils.DateUtil;
+
 import java.time.LocalDateTime;
 
 public class Point {
 
-    LocalDateTime timestamp;
+    LocalDateTime localDateTime;
+    long timestamp;
     double value;
 
-    public Point(LocalDateTime timestamp, float value) {
-        this.timestamp = timestamp;
+    public Point(LocalDateTime localDateTime, float value) {
+        this.localDateTime = localDateTime;
+        this.timestamp = DateUtil.getMillis(localDateTime);
         this.value = value;
     }
 
-    public LocalDateTime getTimestamp() {
+    public LocalDateTime getDateTime() {
+        return localDateTime;
+    }
+
+    public long getTimestamp() {
         return timestamp;
     }
 

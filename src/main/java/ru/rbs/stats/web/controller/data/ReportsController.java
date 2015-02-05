@@ -95,7 +95,7 @@ public class ReportsController {
                 stats.process(params, false, null, null, true, "*");
             }
         });
-        stats.getReportBuilders().put(report.getName(), new SQLReportBuilder(jdbcTemplate));
+        stats.getReportBuilders().put(report.getName(), new SQLReportBuilder(jdbcTemplate, params));
         reportSchedulingConfiguration.getReports().add(params);
         logger.info("Added new report: " + report);
     }

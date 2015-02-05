@@ -25,7 +25,11 @@ public class CachedSerieDataProvider implements TimeSerieDataProvider {
     @Override
     public List<Point> get(LocalDateTime periodStart, LocalDateTime periodEnd) {
         List<Point> result = new ArrayList<Point>();
-        NavigableMap<LocalDateTime, Number> serie = cachedSeries.get(serieName).getSerie();
+        CachedSerieContainer container = cachedSeries.get(serieName);
+        if (container == null) {
+            return Collections.emptyList();
+        }
+        NavigableMap<LocalDateTime, Number> serie = container.getSerie();
         SortedMap<LocalDateTime, Number> subMap = serie.subMap(periodStart, true, periodEnd, true);
         for (LocalDateTime selected : subMap.keySet()) {
             result.add(new Point(selected, subMap.get(selected).floatValue()));

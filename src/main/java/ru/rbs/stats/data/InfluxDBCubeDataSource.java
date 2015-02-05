@@ -7,10 +7,10 @@ import org.slf4j.LoggerFactory;
 import ru.rbs.stats.data.series.time.Point;
 import ru.rbs.stats.store.CubeCoordinates;
 import ru.rbs.stats.store.CubeDescription;
-import ru.rbs.stats.store.CubeSchemaProvider;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -24,17 +24,15 @@ public class InfluxDBCubeDataSource implements TimedCubeDataSource {
 
     private InfluxDB influxDB;
     private String databaseName;
-    private CubeSchemaProvider cubeSchemaProvider;
 
-    public InfluxDBCubeDataSource(InfluxDB influxDB, String databaseName, CubeSchemaProvider schemaProvider) {
+    public InfluxDBCubeDataSource(InfluxDB influxDB, String databaseName) {
         this.influxDB = influxDB;
         this.databaseName = databaseName;
-        this.cubeSchemaProvider = schemaProvider;
     }
 
     @Override
-    public List<Point> fetch(CubeCoordinates coordinates, LocalDateTime periodStart, LocalDateTime periodEnd) {
-        List<Serie> series = influxDB.query(databaseName, buildQuery(coordinates, periodStart, periodEnd), TimeUnit.MILLISECONDS);
+    public List<Point> fetch(CubeCoordinates coordinates, LocalDateTime periodStart, LocalDateTime periodEnd, CubeDescription cubeDescription) {
+        List<Serie> series = influxDB.query(databaseName, buildQuery(coordinates, periodStart, periodEnd, cubeDescription), TimeUnit.MILLISECONDS);
         return toPoints(series, coordinates);
     }
 
@@ -46,7 +44,7 @@ public class InfluxDBCubeDataSource implements TimedCubeDataSource {
                 Object var = row.get(coordinates.getVarName());
                 float value = ((Double) var).floatValue();
                 long timestamp = ((Double) row.get("time")).longValue();
-                LocalDateTime time = LocalDateTime.from(Instant.ofEpochMilli(timestamp));
+                LocalDateTime time = LocalDateTime.from(Instant.ofEpochMilli(timestamp).atZone(ZoneId.systemDefault()));
                 Point point = new Point(time, value);
                 points.add(point);
             }
@@ -56,14 +54,14 @@ public class InfluxDBCubeDataSource implements TimedCubeDataSource {
     }
 
     // TODO: add query cache
-    private String buildQuery(CubeCoordinates coordinates, LocalDateTime periodStart, LocalDateTime periodEnd) {
+    private String buildQuery(CubeCoordinates coordinates, LocalDateTime periodStart, LocalDateTime periodEnd, CubeDescription cubeDescription) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
         StringBuilder axisPart = new StringBuilder();
         Iterator<String> iterator = coordinates.getProfile().keySet().iterator();
         while (iterator.hasNext()) {
             String axisName = iterator.next();
             axisPart.append(axisName).append(" = ");
-            boolean isStringType = cubeSchemaProvider.getCubeSchema(coordinates.getCubeName()).getType(axisName) == CubeDescription.CubeDataType.STRING;
+            boolean isStringType = cubeDescription.getType(axisName) == CubeDescription.CubeDataType.STRING;
             if (isStringType) axisPart.append("'");
             axisPart.append(coordinates.getProfile().get(axisName));
             if (isStringType) axisPart.append("'");

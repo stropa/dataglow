@@ -16,17 +16,20 @@ import java.util.List;
 
 public class SQLReportBuilder implements StatsReportBuilder {
 
+    private ReportParams config;
+
     private static final Logger logger = LoggerFactory.getLogger(SQLReportBuilder.class);
 
     private JdbcTemplate jdbcTemplate;
 
-    public SQLReportBuilder(JdbcTemplate jdbcTemplate) {
+    public SQLReportBuilder(JdbcTemplate jdbcTemplate, final ReportParams config) {
         this.jdbcTemplate = jdbcTemplate;
+        this.config = config;
     }
 
 
     @Override
-    public Report buildReport(final ReportParams config, final LocalDateTime periodStart, final LocalDateTime periodEnd) {
+    public Report buildReport(final LocalDateTime periodStart, final LocalDateTime periodEnd) {
         List<ReportEntry> entries = jdbcTemplate.query(new PreparedStatementCreator() {
             @Override
             public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
@@ -59,6 +62,11 @@ public class SQLReportBuilder implements StatsReportBuilder {
         report.setEntries(entries);
         report.setCubeDescription(config.getCubeDescription());
         return report;
+    }
+
+    @Override
+    public ReportParams getConfig() {
+        return config;
     }
 
 }

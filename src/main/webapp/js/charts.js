@@ -87,11 +87,6 @@ function createChartForArtifact(artifact) {
 			name: 'ru.bpc.payment.metrics.rest:type=SuccessCounter,name=registerSuccessCounter',
 			attribute: 'OneMinuteRate',
 			seriesName: 'registerSuccess'
-		},
-		{
-			name: 'ru.bpc.payment.metrics.rest:type=SuccessCounter,name=paymentSuccessCounter',
-			attribute: 'OneMinuteRate',
-			seriesName: 'paymentSuccess'
 		}
 	], "REST API Success Counters", $('.render-chart-here')[0]);
 
@@ -101,15 +96,15 @@ function createChartForArtifact(artifact) {
 		//dataType: 'json',
 		success: function (data) {
 			debugger;
-			var parsedData = JSON.parse(data);
-			$.each(parsedData, function() {
+			//var parsedData = JSON.parse(data);
+			$.each(data, function() {
 				debugger;
 				var point = {
 					x: this.timestamp * 1000,
-					y: parseFloat(this.value)
+					y: this.value
 				};
 				debugger;
-				chart.series.addPoint(point);
+				chart.series[0].addPoint(point);
 			})
 		}
 	})

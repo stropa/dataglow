@@ -11,6 +11,7 @@ import org.springframework.util.PatternMatchUtils;
 import ru.rbs.stats.analyze.Artifact;
 import ru.rbs.stats.analyze.TimeSeriesAnalyzeConfig;
 import ru.rbs.stats.analyze.alg.TripleSigmaRule;
+import ru.rbs.stats.configuration.DatabaseConfiguration;
 import ru.rbs.stats.data.*;
 import ru.rbs.stats.data.cache.CachedSerieContainer;
 import ru.rbs.stats.service.ArtifactsService;
@@ -34,7 +35,6 @@ import static org.apache.commons.lang.StringUtils.isNotBlank;
 public class Stats implements CubeSchemaProvider {
 
     private static final Logger logger = LoggerFactory.getLogger(Stats.class);
-    public static final String DATABASE_NAME = "play";
 
     @Autowired
     private InfluxDB influxDB;
@@ -45,6 +45,7 @@ public class Stats implements CubeSchemaProvider {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
+    @Resource
     private TimedCubeDataSource cubeDataSource;
 
     private Map<String, StatsReportBuilder> reportBuilders = new HashMap<String, StatsReportBuilder>();
@@ -57,7 +58,7 @@ public class Stats implements CubeSchemaProvider {
     public void init() {
         //reportBuilders.put("merchantDailyCounts", new SQLReportBuilder(jdbcTemplate));
 
-        cubeDataSource = new InfluxDBCubeDataSource(influxDB, DATABASE_NAME, this);
+
 
         final CubeCoordinates c = new CubeCoordinates("merchant.operation.actionCode");
         c.setAxis("merchant", "bsigroup");
@@ -100,7 +101,7 @@ public class Stats implements CubeSchemaProvider {
         while (nextPeriodEnd.isBefore(end.minusSeconds(periodSeconds))) {
             // build report for next period part
             logger.debug("It's " + LocalDateTime.now() + " now and we are going to fetch stats report from " + nextPeriodStart + " to " + nextPeriodEnd);
-            Report report = reportBuilder.buildReport(config, part > 1 ? nextPeriodStart.plusNanos(1000) : nextPeriodStart, nextPeriodEnd);
+            Report report = reportBuilder.buildReport(part > 1 ? nextPeriodStart.plusNanos(1000) : nextPeriodStart, nextPeriodEnd);
             if (!unscheduled) {
                 config.setLastRun(nextPeriodEnd);
             }
@@ -230,7 +231,7 @@ public class Stats implements CubeSchemaProvider {
         }
         Serie serie = builder.build();
 
-        influxDB.write(DATABASE_NAME, TimeUnit.SECONDS, serie);
+        influxDB.write(DatabaseConfiguration.DATABASE_NAME, TimeUnit.SECONDS, serie);
         logger.info("A serie " + serie.getName() + " of " + serie.getRows() + " rows was saved to storage");
     }
 
@@ -244,7 +245,16 @@ public class Stats implements CubeSchemaProvider {
 
     @Override
     public CubeDescription getCubeSchema(String cubeName) {
-        return metricsRegistry.getCubes().get(cubeName);
+        //return metricsRegistry.getCubes().get(cubeName);
+        StatsReportBuilder reportBuilder = reportBuilders.get(cubeName);
+        if (reportBuilder == null) return null;
+        return reportBuilder.getConfig().getCubeDescription();
+    }
+
+    public ReportParams getReportParams(String cubeName) {
+        StatsReportBuilder reportBuilder = reportBuilders.get(cubeName);
+        if (reportBuilder == null) return null;
+        return reportBuilder.getConfig();
     }
 
     public Map<CompositeName, CachedSerieContainer> getCachedSeries() {

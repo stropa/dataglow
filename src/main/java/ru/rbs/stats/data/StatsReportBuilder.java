@@ -4,5 +4,7 @@ import java.time.LocalDateTime;
 
 public interface StatsReportBuilder {
 
-    Report buildReport(ReportParams config, LocalDateTime periodStart, LocalDateTime periodEnd);
+    Report buildReport(LocalDateTime periodStart, LocalDateTime periodEnd);
+
+    ReportParams getConfig();
 }
