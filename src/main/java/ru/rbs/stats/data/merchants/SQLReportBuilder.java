@@ -48,7 +48,7 @@ public class SQLReportBuilder implements StatsReportBuilder {
                 for (String aggregateName : config.getCubeDescription().getAgregates()) {
                     switch (config.getCubeDescription().getType(aggregateName)) {
                         case INTEGER:
-                            entry.getAggregates().add(rs.getInt(aggregateName));
+                            entry.getAggregates().add(rs.getLong(aggregateName));
                             break;
                         case FLOAT:
                             entry.getAggregates().add(rs.getFloat(aggregateName));

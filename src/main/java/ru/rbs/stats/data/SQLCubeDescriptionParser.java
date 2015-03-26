@@ -63,7 +63,7 @@ public class SQLCubeDescriptionParser {
             public boolean test(String s) {
                 if (systemProperties.getDataSourceDatabaseType() == DatabaseUsed.Oracle) {
                     boolean shouldInclude = StringUtils.containsIgnoreCase(s, "bpc");
-                    logger.debug("Now on table: " + s + "will retrieve: " + shouldInclude);
+                    logger.debug("Now on table: " + s + " will retrieve: " + shouldInclude);
                     return shouldInclude;
                 } else {
                     return true;
@@ -125,6 +125,10 @@ public class SQLCubeDescriptionParser {
             String tableName = getTableNameForColumn(columnName, query);
 
             Schema schema = catalog.getSchema(schemaName);
+            if (schema == null) {
+                throw new IllegalArgumentException("Can't find schema with name " + schemaName
+                        + " in catalog. Available schemas: " + catalog.getSchemas());
+            }
             // TODO: handle name cases and quotation for different database vendors
             Table table = getTable(tableName, schema);
             Column column = getColumn(substringAfter(columnName, "."), table);

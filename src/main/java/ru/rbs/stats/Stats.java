@@ -13,7 +13,9 @@ import ru.rbs.stats.analyze.TimeSeriesAnalyzeConfig;
 import ru.rbs.stats.analyze.alg.TripleSigmaRule;
 import ru.rbs.stats.configuration.DatabaseConfiguration;
 import ru.rbs.stats.data.*;
+import ru.rbs.stats.data.cache.CacheManager;
 import ru.rbs.stats.data.cache.CachedSerieContainer;
+import ru.rbs.stats.data.cache.TimeSeriesCache;
 import ru.rbs.stats.service.ArtifactsService;
 import ru.rbs.stats.store.CubeCoordinates;
 import ru.rbs.stats.store.CubeDescription;
@@ -51,7 +53,8 @@ public class Stats implements CubeSchemaProvider {
     private Map<String, StatsReportBuilder> reportBuilders = new HashMap<String, StatsReportBuilder>();
 
     private static MetricsRegistry metricsRegistry = new MetricsRegistry();
-    private Map<CompositeName, CachedSerieContainer> cachedSeries = new HashMap<CompositeName, CachedSerieContainer>();
+    private CacheManager cacheManager = new CacheManager();
+
 
 
     @PostConstruct
@@ -124,7 +127,7 @@ public class Stats implements CubeSchemaProvider {
 
     private void runOnlineAnalyzers(ReportParams config, Report report, LocalDateTime periodStart, LocalDateTime periodEnd, String whatToAnalyze) {
         if (config.isAnalyzeAll()) {
-            CachedSerieDataProvider provider = new CachedSerieDataProvider(cachedSeries);
+            CachedSerieDataProvider provider = new CachedSerieDataProvider(cacheManager.getCache(config.getReportName()).getCachedSeries());
             for (ReportEntry entry : report.getEntries()) {
                 for (String aggregateName : report.getCubeDescription().getAgregates()) {
                     CubeCoordinates coordinates = coordinatesForEntry(entry, report.getCubeDescription());
@@ -154,6 +157,8 @@ public class Stats implements CubeSchemaProvider {
 
     private void updateCache(Report report, LocalDateTime time, ReportParams reportParams) {
         // TODO: move to some production-ready cache implementation. For now we start with the simplest one. Dummy and slow.
+        TimeSeriesCache cache = cacheManager.getCache(reportParams.getReportName());
+        long updateCounter = cache.incrementUpdateCounter();
         cleanExpiredCacheEntries(reportParams.getCacheAge());
         for (ReportEntry entry : report.getEntries()) {
             for (String aggregateName : report.getCubeDescription().getAgregates()) {
@@ -162,33 +167,76 @@ public class Stats implements CubeSchemaProvider {
                 if (reportParams.isCacheAll() ||
                         (reportParams.isUseCache()
                                 && PatternMatchUtils.simpleMatch(reportParams.getCacheMask(), serieName.format()))) {
+                    Map<CompositeName, CachedSerieContainer> cachedSeries = cache.getCachedSeries();
                     CachedSerieContainer container = cachedSeries.get(serieName);
                     if (container == null) {
-                        container = new CachedSerieContainer(serieName.format(), reportParams.getMaxCacheSize());
+                        container = new CachedSerieContainer(serieName, reportParams.getMaxCacheSize());
                         cachedSeries.put(serieName, container);
                     }
                     container.putValue(time, entry.getAggregates().get(report.getCubeDescription().getAgregates().indexOf(aggregateName)));
                 }
             }
         }
+        fillMissingData(report, time, cache, updateCounter);
         logger.info("Finished updating cached series");
+    }
+
+    // TODO: use configurable strategies for filling missing data
+    private void fillMissingData(Report report, LocalDateTime time, TimeSeriesCache cache, long updateCounter) {
+
+        Map<CompositeName, List<CachedSerieContainer>> groupedByDimentions = new HashMap<>();
+        for (CompositeName serieName : cache.getCachedSeries().keySet()) {
+            CachedSerieContainer serieContainer = cache.getCachedSeries().get(serieName);
+            if (serieContainer.getUpdateCount() < updateCounter) {
+                // means that this container was not updated on last run, so we need to put generated data
+                List<String> parts = serieName.getParts();
+                CompositeName dimPart = CompositeName.fromParts(parts.subList(0, parts.size() - 1).toArray(new String[parts.size() - 1]));
+                List<CachedSerieContainer> group = groupedByDimentions.get(dimPart);
+                if (group == null) {
+                    group = new ArrayList<>();
+                    groupedByDimentions.put(dimPart, group);
+                }
+                group.add(serieContainer);
+            }
+        }
+        for (CompositeName nameOfSerieGroup : groupedByDimentions.keySet()) {
+            ReportEntry entry = new ReportEntry();
+            entry.setProfile(nameOfSerieGroup.getParts().subList(1, nameOfSerieGroup.getParts().size()));
+            List<Number> aggregates = new ArrayList<>();
+            //List<CachedSerieContainer> containers = groupedByDimentions.get(nameOfSerieGroup);
+            for (String aggregateName : report.getCubeDescription().getAgregates()) {
+                aggregates.add(0);
+            }
+            entry.setAggregates(aggregates);
+            report.getEntries().add(entry);
+        }
+
+        /*serieContainer.putValue(time, 0);
+        ReportEntry e = new ReportEntry();
+        List<String> parts = serieContainer.getCompositeName().getParts();
+        e.getProfile().addAll(parts.subList(0, parts.size() - 1));
+
+        report.getEntries().add(e);*/
     }
 
     private void cleanExpiredCacheEntries(Duration cacheAge) {
         if (cacheAge == null) {
             return;
         }
-        for (CompositeName serieName : cachedSeries.keySet()) {
-            List<LocalDateTime> toRemove = new ArrayList<LocalDateTime>();
-            SortedMap<LocalDateTime, Number> serie = cachedSeries.get(serieName).getSerie();
-            Set<LocalDateTime> times = serie.keySet();
-            for (LocalDateTime t : times) {
-                if (t.isBefore(LocalDateTime.now().minus(cacheAge))) {
-                    toRemove.add(t);
+        for (String cacheName : cacheManager.getCacheNames()) {
+            Map<CompositeName, CachedSerieContainer> cachedSeries = cacheManager.getCache(cacheName).getCachedSeries();
+            for (CompositeName serieName : cachedSeries.keySet()) {
+                List<LocalDateTime> toRemove = new ArrayList<>();
+                SortedMap<LocalDateTime, Number> serie = cachedSeries.get(serieName).getSerie();
+                Set<LocalDateTime> times = serie.keySet();
+                for (LocalDateTime t : times) {
+                    if (t.isBefore(LocalDateTime.now().minus(cacheAge))) {
+                        toRemove.add(t);
+                    }
                 }
-            }
-            for (LocalDateTime removing : toRemove) {
-                serie.remove(removing);
+                for (LocalDateTime removing : toRemove) {
+                    serie.remove(removing);
+                }
             }
         }
     }
@@ -257,7 +305,7 @@ public class Stats implements CubeSchemaProvider {
         return reportBuilder.getConfig();
     }
 
-    public Map<CompositeName, CachedSerieContainer> getCachedSeries() {
-        return cachedSeries;
+    public Map<CompositeName, CachedSerieContainer> getCachedSeries(String cubeName) {
+        return cacheManager.getCache(cubeName).getCachedSeries();
     }
 }

@@ -49,7 +49,7 @@ public class SeriesController {
         CubeDescription cubeSchema = stats.getCubeSchema(cubeName);
         ReportParams reportParams = stats.getReportParams(cubeName);
 
-        TimeSerieDataProvider provider = new CachedSerieDataProvider(stats.getCachedSeries(), key);
+        TimeSerieDataProvider provider = new CachedSerieDataProvider(stats.getCachedSeries(cubeName), key);
         LocalDateTime periodStart = artifact.getTimeStart().toLocalDateTime();
         List<Point> points;
         LocalDateTime start = periodStart.minusSeconds(reportParams.getPeriodSeconds() * 100);

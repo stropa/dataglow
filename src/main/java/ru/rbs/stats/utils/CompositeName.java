@@ -24,6 +24,13 @@ public class CompositeName {
         return this;
     }
 
+    public List<String> getParts() {
+        return parts;
+    }
+
+    public String getLastPart() {
+        return parts.isEmpty() ? null : parts.get(parts.size() - 1);
+    }
 
     public String format() {
         return format(DEFAULT_DELIMITER);

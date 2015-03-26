@@ -1,5 +1,7 @@
 package ru.rbs.stats.data.cache;
 
+import ru.rbs.stats.utils.CompositeName;
+
 import java.time.LocalDateTime;
 import java.util.NavigableMap;
 import java.util.TreeMap;
@@ -7,15 +9,17 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class CachedSerieContainer {
 
+    CompositeName compositeName;
     String serieName;
-    AtomicLong counter;
+    AtomicLong counter = new AtomicLong(0);
     long maxSize = -1;
 
     NavigableMap<LocalDateTime, Number> serie = new TreeMap<LocalDateTime, Number>();
 
 
-    public CachedSerieContainer(String serieName, long maxSize) {
-        this.serieName = serieName;
+    public CachedSerieContainer(CompositeName compositeName, long maxSize) {
+        this.compositeName = compositeName;
+        this.serieName = compositeName.format();
         this.maxSize = maxSize;
     }
 
@@ -38,8 +42,17 @@ public class CachedSerieContainer {
     public void putValue(LocalDateTime dateTime, Number val) {
         if (maxSize > 0 && counter.get() >= maxSize) {
             serie.pollFirstEntry();
+            counter.decrementAndGet();
         }
         serie.put(dateTime, val);
+        counter.incrementAndGet();
     }
 
+    public long getUpdateCount() {
+        return counter.get();
+    }
+
+    public CompositeName getCompositeName() {
+        return compositeName;
+    }
 }
