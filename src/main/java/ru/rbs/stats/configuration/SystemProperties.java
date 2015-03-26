@@ -3,8 +3,10 @@ package ru.rbs.stats.configuration;
 import org.jooq.SQLDialect;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ReflectionUtils;
 import ru.rbs.stats.configuration.options.DatabaseUsed;
 
+import java.lang.reflect.Field;
 import java.util.Properties;
 
 @Service
@@ -19,22 +21,35 @@ public class SystemProperties {
     public SQLDialect getJooqSQLDialect() {
         switch (getApplicationDatabaseType()) {
             case PostgreSQL:
-                return SQLDialect.POSTGRES;
+                return loadDialect("POSTGRES");
             case Oracle:
                 if (settings.getProperty("database.version").contains("10")) {
-                    return SQLDialect.ORACLE;
+                    return loadDialect("ORACLE");
                 } else if (settings.getProperty("database.version").contains("11")) {
-                    return SQLDialect.ORACLE11G;
+                    return loadDialect("ORACLE11G");
                 } else if (settings.getProperty("database.version").contains("12")) {
-                    return SQLDialect.ORACLE12C;
-                } return SQLDialect.ORACLE;
+                    return loadDialect("ORACLE12C");
+                } return loadDialect("ORACLE");
             case HSQLDB:
-                return SQLDialect.HSQLDB;
+                return loadDialect("HSQLDB");
             default:
-                return SQLDialect.SQL99;
+                return loadDialect("SQL99");
         }
     }
 
+    private SQLDialect loadDialect(String dialectName) {
+        Field field = ReflectionUtils.findField(SQLDialect.class, dialectName);
+        String exceptionMessage = "Can't init database dialect [" + dialectName +
+                "] in JOOQ. Maybe it's for commercial use only. See http://www.jooq.org/download/ ";
+        if (field == null) {
+            throw new IllegalStateException(exceptionMessage);
+        }
+        try {
+            return (SQLDialect) field.get(null);
+        } catch (Exception e) {
+            throw new IllegalStateException(exceptionMessage, e);
+        }
+    }
 
     public DatabaseUsed getDataSourceDatabaseType() {
         return DatabaseUsed.valueOf(settings.getProperty(DATA_SOURCE_DATABASE_TYPE));

@@ -4,6 +4,7 @@ import org.jooq.DSLContext;
 import org.springframework.stereotype.Service;
 import ru.rbs.stats.analyze.Artifact;
 import ru.rbs.stats.model.Sequences;
+import ru.rbs.stats.model.convert.CubeCoordinatesJsonStringConverter;
 import ru.rbs.stats.model.tables.daos.ArtifactDao;
 
 import javax.annotation.Resource;
@@ -19,8 +20,8 @@ public class ArtifactsService {
     private DSLContext dslContext;
 
     public void persist(Artifact artifact) {
-
-        artifactDao.insert(new ru.rbs.stats.model.tables.pojos.Artifact(dslContext.nextval(Sequences.ARTIFACT_IDS),
+        Number nextval = dslContext.nextval(Sequences.ARTIFACT_IDS);
+        artifactDao.insert(new ru.rbs.stats.model.tables.pojos.Artifact(nextval.longValue(),
                 artifact.getName(),
                 artifact.getDescription(), java.sql.Timestamp.valueOf(artifact.getTimestamp()), null,
                 artifact.getCoordinates()));

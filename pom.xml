@@ -11,6 +11,10 @@
 
     <properties>
         <spring.version>4.1.1.RELEASE</spring.version>
+        <jooq.generate.tmp.db.driver>org.hsqldb.jdbc.JDBCDriver</jooq.generate.tmp.db.driver>
+        <jooq.generate.tmp.db.url>jdbc:hsqldb:file:hsqldb/generatedb;shutdown=true</jooq.generate.tmp.db.url>
+        <jooq.generate.tmp.db.login>dataglow</jooq.generate.tmp.db.login>
+        <jooq.generate.tmp.db.password>dataglow</jooq.generate.tmp.db.password>
     </properties>
 
     <dependencies>
@@ -25,11 +29,6 @@
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-context</artifactId>
-            <version>${spring.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-jdbc</artifactId>
             <version>${spring.version}</version>
         </dependency>
         <dependency>
@@ -163,6 +162,43 @@
     <build>
         <plugins>
             <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>sql-maven-plugin</artifactId>
+                <version>1.5</version>
+                <configuration>
+                    <skip>false</skip>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>create-database-for-jooq-codegen</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>execute</goal>
+                        </goals>
+                        <configuration>
+                            <driver>${jooq.generate.tmp.db.driver}</driver>
+                            <url>${jooq.generate.tmp.db.url}</url>
+                            <username>${jooq.generate.tmp.db.login}</username>
+                            <password>${jooq.generate.tmp.db.password}</password>
+
+                            <autocommit>true</autocommit>
+                            <sqlCommand>DROP SCHEMA PUBLIC CASCADE;</sqlCommand>
+                            <srcFiles>
+                                <srcFile>src/main/resources/schema.sql</srcFile>
+                            </srcFiles>
+                        </configuration>
+                    </execution>
+                </executions>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.hsqldb</groupId>
+                        <artifactId>hsqldb</artifactId>
+                        <version>2.3.2</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
+
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.2</version>
@@ -172,49 +208,32 @@
                 </configuration>
             </plugin>
             <plugin>
-                <!-- Specify the maven code generator plugin -->
                 <groupId>org.jooq</groupId>
                 <artifactId>jooq-codegen-maven</artifactId>
                 <version>3.5.0</version>
-
-                <!-- The plugin should hook into the generate goal -->
                 <executions>
                     <execution>
+                        <phase>generate-sources</phase>
                         <goals>
                             <goal>generate</goal>
                         </goals>
                     </execution>
                 </executions>
 
-                <!-- Manage the plugin's dependency. In this example, we'll use a PostgreSQL database -->
-                <dependencies>
-                    <dependency>
-                        <groupId>postgresql</groupId>
-                        <artifactId>postgresql</artifactId>
-                        <version>8.4-702.jdbc4</version>
-                    </dependency>
-                </dependencies>
-
-                <!-- Specify the plugin configuration.
-                     The configuration format is the same as for the standalone code generator -->
                 <configuration>
-
-                    <!-- JDBC connection parameters -->
                     <jdbc>
-                        <driver>org.postgresql.Driver</driver>
-                        <url>jdbc:postgresql://127.0.0.1:5432/dataglow</url>
-                        <user>dataglow</user>
-                        <password>dataglow</password>
+                        <driver>${jooq.generate.tmp.db.driver}</driver>
+                        <url>${jooq.generate.tmp.db.url}</url>
+                        <user>${jooq.generate.tmp.db.login}</user>
+                        <password>${jooq.generate.tmp.db.password}</password>
                     </jdbc>
-
-                    <!-- Generator parameters -->
                     <generator>
                         <name>org.jooq.util.DefaultGenerator</name>
                         <database>
-                            <name>org.jooq.util.postgres.PostgresDatabase</name>
+                            <name>org.jooq.util.hsqldb.HSQLDBDatabase</name>
                             <includes>.*</includes>
                             <excludes></excludes>
-                            <inputSchema>public</inputSchema>
+                            <inputSchema>PUBLIC</inputSchema>
 
                             <customTypes>
                                 <customType>
@@ -227,7 +246,7 @@
                             <forcedTypes>
                                 <forcedType>
                                     <name>CubeCoordinates</name>
-                                    <expression>cube_coordinates</expression>
+                                    <expression>CUBE_COORDINATES</expression>
                                     <types>.*</types>
                                 </forcedType>
                             </forcedTypes>
@@ -237,73 +256,20 @@
                             <packageName>ru.rbs.stats.model</packageName>
                             <directory>target/generated-sources/jooq</directory>
                         </target>
-                        <!-- These properties can be added to the generate element: -->
+                        <!-- For more information about below properties see:
+                        http://www.jooq.org/doc/3.5/manual-single-page/#codegen-advanced -->
                         <generate>
-                            <!-- Primary key / foreign key relations should be generated and used.
-                                 This is a prerequisite for various advanced features.
-                                 Defaults to true -->
                             <relations>true</relations>
-
-                            <!-- Generate deprecated code for backwards compatibility
-                                 Defaults to true -->
                             <deprecated>true</deprecated>
-
-                            <!-- Generate instance fields in your tables, as opposed to static
-                                 fields. This simplifies aliasing.
-                                 Defaults to true -->
                             <instanceFields>true</instanceFields>
-
-                            <!-- Generate the javax.annotation.Generated annotation to indicate
-                                 jOOQ version used for source code.
-                                 Defaults to true -->
                             <generatedAnnotation>true</generatedAnnotation>
-
-                            <!-- Generate jOOQ Record classes for type-safe querying. You can
-                                 turn this off, if you don't need "active records" for CRUD
-                                 Defaults to true -->
                             <records>true</records>
-
-                            <!-- Generate POJOs in addition to Record classes for usage of the
-                                 ResultQuery.fetchInto(Class) API
-                                 Defaults to false -->
                             <pojos>true</pojos>
-
-                            <!-- Generate immutable POJOs for usage of the ResultQuery.fetchInto(Class) API
-                                 This overrides any value set in <pojos/>
-                                 Defaults to false -->
                             <immutablePojos>false</immutablePojos>
-
-                            <!-- Generate interfaces that will be implemented by records and/or pojos.
-                                 You can also use these interfaces in Record.into(Class<?>) and similar
-                                 methods, to let jOOQ return proxy objects for them.
-                                 Defaults to false -->
                             <interfaces>false</interfaces>
-
-                            <!-- Generate DAOs in addition to POJO classes
-                                 Defaults to false -->
                             <daos>true</daos>
-
-                            <!-- Annotate POJOs and Records with JPA annotations for increased
-                                 compatibility and better integration with JPA/Hibernate, etc
-                                 Defaults to false -->
                             <jpaAnnotations>false</jpaAnnotations>
-
-                            <!-- Annotate POJOs and Records with JSR-303 validation annotations
-                                 Defaults to false -->
                             <validationAnnotations>false</validationAnnotations>
-
-                            <!-- Allow to turn off the generation of global object references, which include
-
-                                 - Tables.java
-                                 - Sequences.java
-                                 - UDTs.java
-
-                                 Turning off the generation of the above files may be necessary for very
-                                 large schemas, which exceed the amount of allowed constants in a class's
-                                 constant pool (64k) or, whose static initialiser would exceed 64k of
-                                 byte code
-
-                                 Defaults to true -->
                             <globalObjectReferences>true</globalObjectReferences>
                         </generate>
                     </generator>
@@ -311,5 +277,47 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>dev</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <build>
+                <finalName>dataglow</finalName>
+                <plugins>
+                    <plugin>
+                        <groupId>org.mortbay.jetty</groupId>
+                        <artifactId>jetty-maven-plugin</artifactId>
+                        <version>8.1.14.v20131031</version>
+                        <configuration>
+                            <systemProperties>
+                                <systemProperty>
+                                    <name>spring.profiles.active</name>
+                                    <value>embedded-test-database</value>
+                                </systemProperty>
+                            </systemProperties>
+                            <webApp>
+                                <contextPath>/dataglow</contextPath>
+                                <webInfIncludeJarPattern>.*/spring-web.*.jar$</webInfIncludeJarPattern>
+                            </webApp>
+                            <scanIntervalSeconds>0</scanIntervalSeconds>
+                            <connectors>
+                                <connector implementation="org.eclipse.jetty.server.nio.SelectChannelConnector">
+                                    <port>8987</port>
+                                    <forwarded>true</forwarded>
+                                </connector>
+                            </connectors>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+            <properties>
+                <web.context>/dataglow</web.context>
+                <profile.name>dev</profile.name>
+            </properties>
+        </profile>
+    </profiles>
 
 </project>
