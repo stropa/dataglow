@@ -10,7 +10,7 @@ import java.util.Map;
 public class CubeCoordinates {
 
     String cubeName;                    // like "merchant_daily_counts"
-    Map<String, Object> profile;        // like "merchant" -> "Pet Shop", operation -> "purchase", "result_code"
+    Map<String, Object> profile = new HashMap<>();        // like "merchant" -> "Pet Shop", operation -> "purchase", "result_code"
     String varName;                     // like "total_amount"
 
 

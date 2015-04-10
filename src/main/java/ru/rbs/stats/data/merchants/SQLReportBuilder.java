@@ -33,7 +33,7 @@ public class SQLReportBuilder implements StatsReportBuilder {
         List<ReportEntry> entries = jdbcTemplate.query(new PreparedStatementCreator() {
             @Override
             public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
-                PreparedStatement statement = con.prepareStatement(config.getSql());
+                PreparedStatement statement = con.prepareStatement(config.getQuery());
                 statement.setTimestamp(1, Timestamp.valueOf(periodStart));
                 statement.setTimestamp(2, Timestamp.valueOf(periodEnd));
                 return statement;
@@ -45,7 +45,7 @@ public class SQLReportBuilder implements StatsReportBuilder {
                 for (String dimensionName : config.getCubeDescription().getDimensions()) {
                     entry.getProfile().add(rs.getString(dimensionName));
                 }
-                for (String aggregateName : config.getCubeDescription().getAgregates()) {
+                for (String aggregateName : config.getCubeDescription().getAggregates()) {
                     switch (config.getCubeDescription().getType(aggregateName)) {
                         case INTEGER:
                             entry.getAggregates().add(rs.getLong(aggregateName));

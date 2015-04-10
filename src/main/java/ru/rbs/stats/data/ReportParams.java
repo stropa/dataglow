@@ -6,15 +6,16 @@ import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.concurrent.TimeUnit;
 
-import static org.apache.commons.lang.StringUtils.substringAfterLast;
-import static org.apache.commons.lang.StringUtils.substringBefore;
-
 public class ReportParams extends AbstractSchedulableJob {
+
+    Long id, cubeId;
 
     private String reportName;
     private CubeDescription cubeDescription;
-    private TimeUnit timeUnit;
-    private String sql;
+    //private ChronoUnit timeUnit;
+    private Long period;
+    private String periodUnits;
+    private String query;
 
     private boolean useCache;
     private boolean cacheAll;
@@ -22,22 +23,28 @@ public class ReportParams extends AbstractSchedulableJob {
     private Duration cacheAge;
     private long maxCacheSize;
     private boolean analyzeAll;
+    private String maxCacheAgeUnits;
+    private int maxCacheAgeInUnits;
 
-
-    public ReportParams(String reportName, Long periodSeconds) {
-        this.reportName = reportName;
-        this.periodSeconds = periodSeconds;
+    public ReportParams() {
     }
 
     public ReportParams(String reportName, Long period, ChronoUnit periodUnits) {
         this.reportName = reportName;
         Duration duration = Duration.of(period, periodUnits);
+        this.period = period;
+        this.periodUnits = periodUnits.name();
+        //this.timeUnit = periodUnits;
         this.periodSeconds = duration.getSeconds();
     }
 
-    public ReportParams(String reportName, String period) {
-        this.reportName = reportName;
-        setPeriod(period);
+    @Override
+    public long getPeriodSeconds() {
+        return TimeUnit.SECONDS.convert(period, TimeUnit.valueOf(periodUnits));
+    }
+
+    public long getPeriodInUnits() {
+        return period;
     }
 
     public String getReportName() {
@@ -48,24 +55,6 @@ public class ReportParams extends AbstractSchedulableJob {
         this.reportName = reportName;
     }
 
-    public String getPeriodInSecondsFormatted() {
-        return periodSeconds + " SECONDS";
-    }
-
-    public String getPeriodFormatted() {
-        return timeUnit.convert(periodSeconds, TimeUnit.SECONDS) + timeUnit.name();
-    }
-
-    public long getPeriodInUnits() {
-        return timeUnit.convert(periodSeconds, TimeUnit.SECONDS);
-    }
-
-    public void setPeriod(String periodStr) {
-        long duration = Long.parseLong(substringBefore(periodStr, " "));
-        TimeUnit unit = TimeUnit.valueOf(substringAfterLast(periodStr, " "));
-        this.timeUnit = unit;
-        this.periodSeconds = TimeUnit.SECONDS.convert(duration,unit);
-    }
 
     public CubeDescription getCubeDescription() {
         return cubeDescription;
@@ -75,20 +64,45 @@ public class ReportParams extends AbstractSchedulableJob {
         this.cubeDescription = cubeDescription;
     }
 
-    public TimeUnit getTimeUnit() {
-        return timeUnit;
+
+    public Long getId() {
+        return id;
     }
 
-    public void setTimeUnit(TimeUnit timeUnit) {
-        this.timeUnit = timeUnit;
+    public void setId(Long id) {
+        this.id = id;
     }
 
-    public String getSql() {
-        return sql;
+    public Long getCubeId() {
+        return cubeId;
     }
 
-    public void setSql(String sql) {
-        this.sql = sql;
+    public void setCubeId(Long cubeId) {
+        this.cubeId = cubeId;
+    }
+
+    public Long getPeriod() {
+        return period;
+    }
+
+    public void setPeriod(Long period) {
+        this.period = period;
+    }
+
+    public String getPeriodUnits() {
+        return periodUnits;
+    }
+
+    public void setPeriodUnits(String periodUnits) {
+        this.periodUnits = periodUnits;
+    }
+
+    public String getQuery() {
+        return query;
+    }
+
+    public void setQuery(String query) {
+        this.query = query;
     }
 
     public boolean isUseCache() {
@@ -137,5 +151,21 @@ public class ReportParams extends AbstractSchedulableJob {
 
     public void setMaxCacheSize(long maxCacheSize) {
         this.maxCacheSize = maxCacheSize;
+    }
+
+    public void setMaxCacheAgeUnits(String maxCacheAgeUnits) {
+        this.maxCacheAgeUnits = maxCacheAgeUnits;
+    }
+
+    public String getMaxCacheAgeUnits() {
+        return maxCacheAgeUnits;
+    }
+
+    public void setMaxCacheAgeInUnits(int maxCacheAgeInUnits) {
+        this.maxCacheAgeInUnits = maxCacheAgeInUnits;
+    }
+
+    public int getMaxCacheAgeInUnits() {
+        return maxCacheAgeInUnits;
     }
 }

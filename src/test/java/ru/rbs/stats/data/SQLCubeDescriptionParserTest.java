@@ -63,7 +63,7 @@ public class SQLCubeDescriptionParserTest extends AbstractTestNGSpringContextTes
     @Test
     public void testParseCubeFromQuery() {
         CubeDescription cubeDescription = sqlCubeDescriptionParser.parseCubeFromQuery(QUERY, "cubeName");
-        assertTrue(cubeDescription.getAgregates().containsAll(asList("sum_h_amount", "count_all")));
+        assertTrue(cubeDescription.getAggregates().containsAll(asList("sum_h_amount", "count_all")));
         assertTrue(cubeDescription.getDimensions().containsAll(asList("m_merchantlogin", "h_state", "h_action_code")));
         assertEquals(cubeDescription.getType("sum_h_amount"), CubeDataType.INTEGER);
         assertEquals(cubeDescription.getType("count_all"), CubeDataType.INTEGER);
@@ -74,8 +74,8 @@ public class SQLCubeDescriptionParserTest extends AbstractTestNGSpringContextTes
     @Test
     public void testParseCubeFromQueryWithAliases() {
         CubeDescription cubeDescription = sqlCubeDescriptionParser.parseCubeFromQuery(QUERY_WITH_ALIASES, "cubeName");
-        assertTrue(cubeDescription.getAgregates().containsAll(asList("total_count", "sum_amount")));
-        assertEquals(cubeDescription.getAgregates().size(), 2);
+        assertTrue(cubeDescription.getAggregates().containsAll(asList("total_count", "sum_amount")));
+        assertEquals(cubeDescription.getAggregates().size(), 2);
         assertTrue(cubeDescription.getDimensions().containsAll(asList("merchant_login", "hist_state", "action_code")));
         assertEquals(cubeDescription.getDimensions().size(), 3);
     }

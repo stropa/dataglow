@@ -2,7 +2,6 @@ package ru.rbs.stats;
 
 
 import org.influxdb.InfluxDB;
-import org.influxdb.dto.Serie;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,7 +10,6 @@ import org.springframework.util.PatternMatchUtils;
 import ru.rbs.stats.analyze.Artifact;
 import ru.rbs.stats.analyze.TimeSeriesAnalyzeConfig;
 import ru.rbs.stats.analyze.alg.TripleSigmaRule;
-import ru.rbs.stats.configuration.DatabaseConfiguration;
 import ru.rbs.stats.data.*;
 import ru.rbs.stats.data.cache.CacheManager;
 import ru.rbs.stats.data.cache.CachedSerieContainer;
@@ -25,12 +23,8 @@ import ru.rbs.stats.utils.CompositeName;
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import java.time.Duration;
-import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.chrono.ChronoZonedDateTime;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 
 import static org.apache.commons.lang.StringUtils.isNotBlank;
 
@@ -115,7 +109,7 @@ public class Stats implements CubeSchemaProvider {
                 runOnlineAnalyzers(config, report, nextPeriodStart, nextPeriodEnd, whatToAnalyze);
             }
 
-            sendToStorage(report, nextPeriodEnd);
+            cubeDataSource.sendToStorage(report, nextPeriodEnd);
 
             nextPeriodEnd = nextPeriodEnd.plusSeconds(periodSeconds);
             nextPeriodStart = nextPeriodStart.plusSeconds(periodSeconds);
@@ -129,7 +123,7 @@ public class Stats implements CubeSchemaProvider {
         if (config.isAnalyzeAll()) {
             CachedSerieDataProvider provider = new CachedSerieDataProvider(cacheManager.getCache(config.getReportName()).getCachedSeries());
             for (ReportEntry entry : report.getEntries()) {
-                for (String aggregateName : report.getCubeDescription().getAgregates()) {
+                for (String aggregateName : report.getCubeDescription().getAggregates()) {
                     CubeCoordinates coordinates = coordinatesForEntry(entry, report.getCubeDescription());
                     coordinates.setVarName(aggregateName);
 
@@ -161,7 +155,7 @@ public class Stats implements CubeSchemaProvider {
         long updateCounter = cache.incrementUpdateCounter();
         cleanExpiredCacheEntries(reportParams.getCacheAge());
         for (ReportEntry entry : report.getEntries()) {
-            for (String aggregateName : report.getCubeDescription().getAgregates()) {
+            for (String aggregateName : report.getCubeDescription().getAggregates()) {
                 CompositeName serieName = buildSerieName(entry, report.getCubeDescription());
                 serieName = serieName.withPart(aggregateName);
                 if (reportParams.isCacheAll() ||
@@ -173,7 +167,7 @@ public class Stats implements CubeSchemaProvider {
                         container = new CachedSerieContainer(serieName, reportParams.getMaxCacheSize());
                         cachedSeries.put(serieName, container);
                     }
-                    container.putValue(time, entry.getAggregates().get(report.getCubeDescription().getAgregates().indexOf(aggregateName)));
+                    container.putValue(time, entry.getAggregates().get(report.getCubeDescription().getAggregates().indexOf(aggregateName)));
                 }
             }
         }
@@ -204,7 +198,7 @@ public class Stats implements CubeSchemaProvider {
             entry.setProfile(nameOfSerieGroup.getParts().subList(1, nameOfSerieGroup.getParts().size()));
             List<Number> aggregates = new ArrayList<>();
             //List<CachedSerieContainer> containers = groupedByDimentions.get(nameOfSerieGroup);
-            for (String aggregateName : report.getCubeDescription().getAgregates()) {
+            for (String aggregateName : report.getCubeDescription().getAggregates()) {
                 aggregates.add(0);
             }
             entry.setAggregates(aggregates);
@@ -259,29 +253,7 @@ public class Stats implements CubeSchemaProvider {
     }
 
 
-    public void sendToStorage(Report report, LocalDateTime time) {
-        Serie.Builder builder = new Serie.Builder(report.getCubeDescription().getName());
 
-        List<String> allColumns = new ArrayList<String>();
-        allColumns.addAll(report.getCubeDescription().getDimensions());
-        allColumns.addAll(report.getCubeDescription().getAgregates());
-        allColumns.add("time");
-        builder.columns(allColumns.toArray(new String[allColumns.size()]));
-
-        Instant instant = ((ChronoZonedDateTime) time.atZone(ZoneId.systemDefault())).toInstant();
-        Date timeSoSend = Date.from(instant);
-        for (ReportEntry entry : report.getEntries()) {
-            List vals = new ArrayList();
-            vals.addAll(entry.getProfile());
-            vals.addAll(entry.getAggregates());
-            vals.add(timeSoSend.getTime() / 1000);
-            builder.values(vals.toArray());
-        }
-        Serie serie = builder.build();
-
-        influxDB.write(DatabaseConfiguration.DATABASE_NAME, TimeUnit.SECONDS, serie);
-        logger.info("A serie " + serie.getName() + " of " + serie.getRows() + " rows was saved to storage");
-    }
 
     public Map<String, StatsReportBuilder> getReportBuilders() {
         return reportBuilders;

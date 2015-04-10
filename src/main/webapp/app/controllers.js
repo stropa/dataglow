@@ -1,4 +1,4 @@
-var controllers = angular.module('dataglowControllers', []);
+var controllers = angular.module('dataglowControllers', ['ngResource']);
 
 controllers.controller('ReportsController', ['$scope', 'ReportsDataSource', function ($scope, ReportsDataSource) {
 
@@ -48,15 +48,63 @@ controllers.controller('ReportsController', ['$scope', 'ReportsDataSource', func
 
 }]);
 
-controllers.controller('ArtifactsController', ['$scope', 'ArtifactsDataSource', function($scope, ArtifactsDataSource) {
+controllers.controller('ArtifactsController', ['$scope', 'ArtifactsDataSource', function ($scope, ArtifactsDataSource) {
 
     $scope.artifacts = ArtifactsDataSource.query();
 
     function showChartForArtifact(artifact) {
         console.log("GOTCHA!!!");
-        createChartForArtifact(artifact);
+        showChart(artifact);
     }
 
     $scope.showChartForArtifact = showChartForArtifact;
+
+}]);
+
+controllers.controller('SeriesController', ['$scope', '$http', 'CubesDataSource', 'SeriesDataSource', function ($scope, $http, CubesDataSource, SeriesDataSource) {
+
+    function cubeSelected() {
+
+        $scope.cubeDescription = CubesDataSource.get({}, {id: $scope.cubeId});
+        $scope.cubeDescription.$promise.then(function (cubeDescription) {
+            $scope.totalAxes = cubeDescription.dimensions.length;
+        });
+
+        $scope.dimensions = CubesDataSource.get({}, {id: $scope.cubeId + "/axes"});
+        $scope.dimensions.$promise.then(function (dims) {
+            var i = 0;
+            axes = [];
+            for (axe in dims.axes) {
+                axes[i] = dims.axes[axe];
+                i++;
+            }
+            $scope.axes = axes;
+        });
+    }
+
+    $scope.cubeSelected = cubeSelected;
+
+    $scope.cubes = CubesDataSource.query();
+
+    // forCubeCoordinates
+
+    function axeSelected() {
+        $scope.points = SeriesDataSource.loadForCubeCoordinates({
+                cubeName: $scope.cubeDescription.name,
+                axe0: $scope.axeSelection_0,
+                axe1: $scope.axeSelection_1,
+                axe2: $scope.axeSelection_2,
+                aggregate: $scope.aggregateSelected
+            },
+            {path: "forCubeCoordinates"}
+        );
+        debugger;
+        $scope.points.$promise.then(function(points) {
+            debugger;
+            showChart(points);
+        })
+    }
+
+    $scope.axeSelected = axeSelected;
 
 }]);

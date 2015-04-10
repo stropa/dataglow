@@ -2,16 +2,14 @@ package ru.rbs.stats.web.controller.data;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
-import ru.rbs.stats.Stats;
 import ru.rbs.stats.configuration.StatsReportSchedulingConfiguration;
 import ru.rbs.stats.data.ReportParams;
 import ru.rbs.stats.data.SQLCubeDescriptionParser;
-import ru.rbs.stats.data.merchants.SQLReportBuilder;
+import ru.rbs.stats.service.ReportsService;
 import ru.rbs.stats.utils.DateUtil;
 import ru.rbs.stats.web.dto.Report;
 
@@ -32,16 +30,13 @@ public class ReportsController {
     }
 
     @Resource
-    private StatsReportSchedulingConfiguration reportSchedulingConfiguration;
-
-    @Resource
     private SQLCubeDescriptionParser sqlCubeDescriptionParser;
 
     @Resource
-    private Stats stats;
+    private StatsReportSchedulingConfiguration reportSchedulingConfiguration;
 
     @Resource
-    private JdbcTemplate jdbcTemplate;
+    private ReportsService reportsService;
 
     @RequestMapping(method = RequestMethod.GET)
     public List<Report> getAll() {
@@ -49,9 +44,9 @@ public class ReportsController {
         for (ReportParams reportParams : reportSchedulingConfiguration.getReports()) {
             Report report = new Report(
                     reportParams.getReportName(),
-                    reportParams.getSql(),
+                    reportParams.getQuery(),
                     (int) reportParams.getPeriodInUnits(),
-                    reportParams.getTimeUnit().toString());
+                    reportParams.getPeriodUnits());
             report.setLastBuildTime(reportParams.getLastRun() != null ? DateUtil.getMillis(reportParams.getLastRun()) : null);
             reports.add(report);
 
@@ -71,7 +66,7 @@ public class ReportsController {
         final ReportParams params = new ReportParams(report.getName(), (long) report.getPeriod(),
                 ChronoUnit.valueOf(report.getPeriodUnits()));
 
-        params.setSql(report.getQuery());
+        params.setQuery(report.getQuery());
 
         params.setCubeDescription(sqlCubeDescriptionParser.parseCubeFromQuery(report.getQuery(), report.getName()));
 
@@ -82,6 +77,8 @@ public class ReportsController {
 
             if (report.getMaxCacheAgeUnits() != null && report.getMaxCacheAge() > 0) {
                 params.setCacheAge(Duration.of(report.getMaxCacheAge(), ChronoUnit.valueOf(report.getMaxCacheAgeUnits())));
+                params.setMaxCacheAgeUnits(report.getMaxCacheAgeUnits());
+                params.setMaxCacheAgeInUnits(report.getMaxCacheAge());
             } else {
                 //params.setCacheAge(Duration.ofHours(1));
             }
@@ -89,14 +86,9 @@ public class ReportsController {
         }
         params.setAnalyzeAll(report.isAnalyzeAll());
 
-        params.setJob(new Runnable() {
-            @Override
-            public void run() {
-                stats.process(params, false, null, null, true, "*");
-            }
-        });
-        stats.getReportBuilders().put(report.getName(), new SQLReportBuilder(jdbcTemplate, params));
-        reportSchedulingConfiguration.getReports().add(params);
+        reportsService.startReport(params);
+        reportsService.persist(params);
+
         logger.info("Added new report: " + report);
     }
 

@@ -1,6 +1,7 @@
 package ru.rbs.stats.configuration;
 
 import org.modelmapper.ModelMapper;
+import org.modelmapper.jooq.RecordValueReader;
 import org.springframework.beans.factory.config.PropertiesFactoryBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -28,7 +29,9 @@ public class AppConfiguration {
 
     @Bean(name = "mapper")
     public ModelMapper getModelMapper() {
-        return new ModelMapper();
+        ModelMapper mapper = new ModelMapper();
+        mapper.getConfiguration().addValueReader(new RecordValueReader());
+        return mapper;
     }
 
 }

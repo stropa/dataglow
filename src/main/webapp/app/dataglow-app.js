@@ -1,6 +1,6 @@
 var app = angular.module('dataglow', ['dataServices', 'ngRoute', 'dataglowControllers']);
 
-app.constant('serverLocation', 'http://localhost:8081/dataglow-server/mvc');
+app.constant('serverLocation', 'http://localhost:8987/dataglow/mvc');
 
 app.config(['$routeProvider',
     function ($routeProvider) {
@@ -12,6 +12,10 @@ app.config(['$routeProvider',
             when('/artifacts', {
                 templateUrl: 'parts/artifacts.html',
                 controller: 'ArtifactsController'
+            }).
+            when('/data', {
+                templateUrl: 'parts/series.html',
+                controller: 'SeriesController'
             }).
             otherwise({
                 redirectTo: '/reports'

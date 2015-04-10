@@ -52,7 +52,7 @@ public class StatsReportSchedulingConfiguration {
 
             if (config.getLastRun() == null) config.setLastRun(now.minusSeconds(config.getPeriodSeconds()));
             if (now.isAfter(config.getLastRun().plusSeconds(config.getPeriodSeconds()))) {
-                // It's time! lets build a report.
+                logger.debug("It's time to build report {}", config);
                 try {
                     config.runJob();
                 } finally {

@@ -79,35 +79,33 @@ function JmxChartsFactory(keepHistorySec, pollInterval, columnsCount, url) {
 
 }
 
-function createChartForArtifact(artifact) {
-	console.log(artifact.name + " WHOA!");
+function showChart(data) {
 
 	var chart = createChart([
 		{
-			name: 'ru.bpc.payment.metrics.rest:type=SuccessCounter,name=registerSuccessCounter',
-			attribute: 'OneMinuteRate',
-			seriesName: 'registerSuccess'
+			name: 'Name',
+			attribute: 'value',
+			seriesName: 'time'
 		}
 	], "REST API Success Counters", $('.render-chart-here')[0]);
 
-	$.ajax({
+	/*$.ajax({
 		type: 'GET',
 		url: 'mvc/series/forArtifact/' + artifact.id,
 		//dataType: 'json',
 		success: function (data) {
 			debugger;
-			//var parsedData = JSON.parse(data);
+			//var parsedData = JSON.parse(data);*/
 			$.each(data, function() {
-				debugger;
 				var point = {
-					x: this.timestamp * 1000,
+					x: this.timestamp,
 					y: this.value
 				};
 				debugger;
 				chart.series[0].addPoint(point);
-			})
-		}
-	})
+			});
+/*		}
+	})*/
 
 }
 

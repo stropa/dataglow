@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import ru.rbs.stats.Stats;
 import ru.rbs.stats.data.CachedSerieDataProvider;
@@ -13,6 +14,7 @@ import ru.rbs.stats.data.TimedCubeDataSource;
 import ru.rbs.stats.data.series.time.Point;
 import ru.rbs.stats.model.tables.daos.ArtifactDao;
 import ru.rbs.stats.model.tables.pojos.Artifact;
+import ru.rbs.stats.store.CubeCoordinates;
 import ru.rbs.stats.store.CubeDescription;
 import ru.rbs.stats.utils.CompositeName;
 
@@ -44,13 +46,20 @@ public class SeriesController {
     @RequestMapping("forArtifact/{id}")
     public List<Point> forArtifact(@PathVariable String id) {
         Artifact artifact = artifactDao.findById(Long.valueOf(id));
-        CompositeName key = Stats.buildSerieName(artifact.getCubeCoordinates());
-        String cubeName = artifact.getCubeCoordinates().getCubeName();
+        final CubeCoordinates cubeCoordinates = artifact.getCubeCoordinates();
+
+        String cubeName = cubeCoordinates.getCubeName();
+        LocalDateTime periodStart = artifact.getTimeStart().toLocalDateTime();
+
+        return getPoints(cubeCoordinates, cubeName, periodStart);
+    }
+
+    private List<Point> getPoints(final CubeCoordinates cubeCoordinates, String cubeName, LocalDateTime periodStart) {
+        CompositeName key = Stats.buildSerieName(cubeCoordinates);
         CubeDescription cubeSchema = stats.getCubeSchema(cubeName);
         ReportParams reportParams = stats.getReportParams(cubeName);
 
         TimeSerieDataProvider provider = new CachedSerieDataProvider(stats.getCachedSeries(cubeName), key);
-        LocalDateTime periodStart = artifact.getTimeStart().toLocalDateTime();
         List<Point> points;
         LocalDateTime start = periodStart.minusSeconds(reportParams.getPeriodSeconds() * 100);
         LocalDateTime end = periodStart.plusSeconds(reportParams.getPeriodSeconds() * 100);
@@ -64,7 +73,7 @@ public class SeriesController {
                         logger.error("Cant find cube description");
                         return Collections.emptyList();
                     }
-                    return timedCubeDataSource.fetch(artifact.getCubeCoordinates(), periodStart, periodEnd,
+                    return timedCubeDataSource.fetch(cubeCoordinates, periodStart, periodEnd,
                             cubeSchema);
                 }
 
@@ -75,6 +84,31 @@ public class SeriesController {
             };
             points = provider.get(start, end);
         }
+        return points;
+    }
+
+    @RequestMapping("forCubeCoordinates")
+    public List<Point> forCubeCoordinates(@RequestParam("cubeName") String cubeName,
+                                          @RequestParam(value = "axe0", required = false) String axe0,
+                                          @RequestParam(value = "axe1", required = false) String axe1,
+                                          @RequestParam(value = "axe2", required = false) String axe2,
+                                          @RequestParam(value = "aggregate") String aggregate) {
+        CubeDescription cubeSchema = stats.getCubeSchema(cubeName);
+        CubeCoordinates cubeCoordinates = new CubeCoordinates(cubeName);
+        cubeCoordinates.setVarName(aggregate);
+        if (axe0 != null) {
+            cubeCoordinates.getProfile().put(cubeSchema.getDimensions().get(0), axe0);
+        }
+        if (axe1 != null) {
+            cubeCoordinates.getProfile().put(cubeSchema.getDimensions().get(1), axe1);
+        }
+        if (axe2 != null) {
+            cubeCoordinates.getProfile().put(cubeSchema.getDimensions().get(2), axe2);
+        }
+
+        ReportParams reportParams = stats.getReportParams(cubeName);
+        LocalDateTime periodStart = LocalDateTime.now().minusSeconds(reportParams.getPeriodSeconds() * 100);
+        List<Point> points = getPoints(cubeCoordinates, cubeName, periodStart);
         return points;
     }
 

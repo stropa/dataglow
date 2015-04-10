@@ -17,6 +17,7 @@ public class SystemProperties {
 
     public static final String SCHEMA = "schema";
     public static final String DATA_SOURCE_DATABASE_TYPE = "data.source.database.type";
+    public static final String INFLUXDB_DATABASE_NAME = "influxdb.database.name";
 
     public SQLDialect getJooqSQLDialect() {
         switch (getApplicationDatabaseType()) {

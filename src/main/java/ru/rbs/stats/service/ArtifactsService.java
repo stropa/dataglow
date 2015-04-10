@@ -4,7 +4,6 @@ import org.jooq.DSLContext;
 import org.springframework.stereotype.Service;
 import ru.rbs.stats.analyze.Artifact;
 import ru.rbs.stats.model.Sequences;
-import ru.rbs.stats.model.convert.CubeCoordinatesJsonStringConverter;
 import ru.rbs.stats.model.tables.daos.ArtifactDao;
 
 import javax.annotation.Resource;

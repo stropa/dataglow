@@ -11,4 +11,6 @@ public interface TimedCubeDataSource {
 
     List<Point> fetch(CubeCoordinates coordinates, LocalDateTime periodStart, LocalDateTime periodEnd, CubeDescription cubeDescription);
 
+    void sendToStorage(Report report, LocalDateTime time);
+
 }

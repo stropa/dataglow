@@ -108,7 +108,7 @@ public class SQLCubeDescriptionParser {
         }
 
         cubeDescription.setDimensions(dimensions);
-        cubeDescription.setAgregates(aggregates);
+        cubeDescription.setAggregates(aggregates);
 
         return cubeDescription;
 

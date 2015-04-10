@@ -20,8 +20,6 @@ import javax.sql.DataSource;
 @Configuration
 public class DatabaseConfiguration {
 
-    public static final String DATABASE_NAME = "play";
-
     @Resource(name = "dataSource")
     private DataSource dataSource;
 
@@ -41,7 +39,7 @@ public class DatabaseConfiguration {
 
     @Bean(name = "timedCubeDataSource")
     public TimedCubeDataSource getTimedCubeDataSource() {
-        return new InfluxDBCubeDataSource(influxDB, DATABASE_NAME);
+        return new InfluxDBCubeDataSource(influxDB, systemProperties.getProperty(SystemProperties.INFLUXDB_DATABASE_NAME));
     }
 
     @Bean(name = "dataSource")
@@ -55,7 +53,7 @@ public class DatabaseConfiguration {
     @Bean(name = "appDataSource")
     public DataSource getAppDataSource() {
         BoneCPDataSource dataSource = new BoneCPDataSource();
-        dataSource.setJdbcUrl("jdbc:hsqldb:file:hsqldb/appdata");
+        dataSource.setJdbcUrl("jdbc:hsqldb:file:/Users/stropa/projects/BPC/analytics/hsqldb/dataglowapp");
         dataSource.setDriverClass("org.hsqldb.jdbc.JDBCDriver");
         return dataSource;
     }

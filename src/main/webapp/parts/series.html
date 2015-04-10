@@ -1,0 +1,40 @@
+<div class="common-form">
+    <div class="row">
+        <div class="col-xs-12">
+            <label class="form-label">Choose Dataset(Cube):</label>
+            <select class="form-control" ng-model="cubeId" name="cube_name" ng-change="cubeSelected()">
+                <option ng-repeat="cube in cubes" value="{{cube.id}}">{{cube.name}}</option>
+            </select>
+        </div>
+    </div>
+    <div class="row">
+        <!--ng-repeat="dimension in cubeDescription.dimensions"-->
+        <div ng-show="totalAxes > 0" class="col-xs-4">
+            <label class="form-label">{{cubeDescription.dimensions[0]}}:</label>
+            <select class="form-control" ng-model="axeSelection_0"  name="axe_{{cubeDescription.dimensions[0]}}" ng-change="axeSelected()">
+                <option ng-repeat="axeVal in axes[0]" value="{{axeVal}}">{{axeVal}}</option>
+            </select>
+        </div>
+        <div ng-show="totalAxes > 1" class="col-xs-4">
+            <label class="form-label">{{cubeDescription.dimensions[1]}}:</label>
+            <select class="form-control" ng-model="axeSelection_1"  name="axe_{{cubeDescription.dimensions[1]}}" ng-change="axeSelected()">
+                <option ng-repeat="axeVal in axes[1]" value="{{axeVal}}">{{axeVal}}</option>
+            </select>
+        </div>
+        <div ng-show="totalAxes > 2" class="col-xs-4">
+            <label class="form-label">{{cubeDescription.dimensions[2]}}:</label>
+            <select class="form-control" ng-model="axeSelection_2"  name="axe_{{cubeDescription.dimensions[2]}}" ng-change="axeSelected()">
+                <option ng-repeat="axeVal in axes[2]" value="{{axeVal}}">{{axeVal}}</option>
+            </select>
+        </div>
+    </div>
+    <div class="row" ng-show="cubeDescription != null">
+        <div class="col-xs-4">
+            <label class="form-label">Variable:</label>
+            <select class="form-control" ng-model="aggregateSelected" ng-change="axeSelected()">
+                <option ng-repeat="aggregate in cubeDescription.aggregates">{{aggregate}}</option>
+            </select>
+        </div>
+    </div>
+</div>
+<div class="render-chart-here"></div>

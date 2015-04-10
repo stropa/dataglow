@@ -11,11 +11,9 @@ import ru.rbs.stats.store.CubeDescription;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.chrono.ChronoZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 public class InfluxDBCubeDataSource implements TimedCubeDataSource {
@@ -34,6 +32,30 @@ public class InfluxDBCubeDataSource implements TimedCubeDataSource {
     public List<Point> fetch(CubeCoordinates coordinates, LocalDateTime periodStart, LocalDateTime periodEnd, CubeDescription cubeDescription) {
         List<Serie> series = influxDB.query(databaseName, buildQuery(coordinates, periodStart, periodEnd, cubeDescription), TimeUnit.MILLISECONDS);
         return toPoints(series, coordinates);
+    }
+
+    public void sendToStorage(Report report, LocalDateTime time) {
+        Serie.Builder builder = new Serie.Builder(report.getCubeDescription().getName());
+
+        List<String> allColumns = new ArrayList<String>();
+        allColumns.addAll(report.getCubeDescription().getDimensions());
+        allColumns.addAll(report.getCubeDescription().getAggregates());
+        allColumns.add("time");
+        builder.columns(allColumns.toArray(new String[allColumns.size()]));
+
+        Instant instant = ((ChronoZonedDateTime) time.atZone(ZoneId.systemDefault())).toInstant();
+        Date timeSoSend = Date.from(instant);
+        for (ReportEntry entry : report.getEntries()) {
+            List vals = new ArrayList();
+            vals.addAll(entry.getProfile());
+            vals.addAll(entry.getAggregates());
+            vals.add(timeSoSend.getTime() / 1000);
+            builder.values(vals.toArray());
+        }
+        Serie serie = builder.build();
+
+        influxDB.write(databaseName, TimeUnit.SECONDS, serie);
+        logger.info("A serie " + serie.getName() + " of " + serie.getRows() + " rows was saved to storage");
     }
 
     private List<Point> toPoints(List<Serie> series, CubeCoordinates coordinates) {

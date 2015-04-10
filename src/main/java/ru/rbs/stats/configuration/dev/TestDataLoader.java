@@ -26,7 +26,7 @@ public class TestDataLoader {
     private DataSource testDataSource;
 
 
-    //@PostConstruct
+    @PostConstruct
     public void loadData() {
         ResourceDatabasePopulator populator = new ResourceDatabasePopulator();
         populator.addScript(new ClassPathResource("test_database.sql"));
