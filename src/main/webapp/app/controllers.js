@@ -88,23 +88,23 @@ controllers.controller('SeriesController', ['$scope', '$http', 'CubesDataSource'
 
     // forCubeCoordinates
 
-    function axeSelected() {
+    function loadPoints() {
         $scope.points = SeriesDataSource.loadForCubeCoordinates({
                 cubeName: $scope.cubeDescription.name,
                 axe0: $scope.axeSelection_0,
                 axe1: $scope.axeSelection_1,
                 axe2: $scope.axeSelection_2,
-                aggregate: $scope.aggregateSelected
+                aggregate: $scope.aggregateSelected,
+                dateFrom: $scope.dateFrom,
+                dateTo: $scope.dateTo
             },
             {path: "forCubeCoordinates"}
         );
-        debugger;
         $scope.points.$promise.then(function(points) {
-            debugger;
             showChart(points);
         })
     }
 
-    $scope.axeSelected = axeSelected;
+    $scope.loadPoints = loadPoints;
 
 }]);

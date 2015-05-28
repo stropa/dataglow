@@ -11,19 +11,22 @@
         <!--ng-repeat="dimension in cubeDescription.dimensions"-->
         <div ng-show="totalAxes > 0" class="col-xs-4">
             <label class="form-label">{{cubeDescription.dimensions[0]}}:</label>
-            <select class="form-control" ng-model="axeSelection_0"  name="axe_{{cubeDescription.dimensions[0]}}" ng-change="axeSelected()">
+            <select class="form-control" ng-model="axeSelection_0" name="axe_{{cubeDescription.dimensions[0]}}"
+                    ng-change="loadPoints()">
                 <option ng-repeat="axeVal in axes[0]" value="{{axeVal}}">{{axeVal}}</option>
             </select>
         </div>
         <div ng-show="totalAxes > 1" class="col-xs-4">
             <label class="form-label">{{cubeDescription.dimensions[1]}}:</label>
-            <select class="form-control" ng-model="axeSelection_1"  name="axe_{{cubeDescription.dimensions[1]}}" ng-change="axeSelected()">
+            <select class="form-control" ng-model="axeSelection_1" name="axe_{{cubeDescription.dimensions[1]}}"
+                    ng-change="loadPoints()">
                 <option ng-repeat="axeVal in axes[1]" value="{{axeVal}}">{{axeVal}}</option>
             </select>
         </div>
         <div ng-show="totalAxes > 2" class="col-xs-4">
             <label class="form-label">{{cubeDescription.dimensions[2]}}:</label>
-            <select class="form-control" ng-model="axeSelection_2"  name="axe_{{cubeDescription.dimensions[2]}}" ng-change="axeSelected()">
+            <select class="form-control" ng-model="axeSelection_2" name="axe_{{cubeDescription.dimensions[2]}}"
+                    ng-change="loadPoints()">
                 <option ng-repeat="axeVal in axes[2]" value="{{axeVal}}">{{axeVal}}</option>
             </select>
         </div>
@@ -31,10 +34,62 @@
     <div class="row" ng-show="cubeDescription != null">
         <div class="col-xs-4">
             <label class="form-label">Variable:</label>
-            <select class="form-control" ng-model="aggregateSelected" ng-change="axeSelected()">
+            <select class="form-control" ng-model="aggregateSelected" ng-change="loadPoints()">
                 <option ng-repeat="aggregate in cubeDescription.aggregates">{{aggregate}}</option>
             </select>
         </div>
     </div>
+
+    <div class="row">
+
+        <div class='col-xs-4'>
+            <!--<div class="form-group">-->
+            <label class="form-label">From:</label>
+
+            <div class='input-group date' id='datetimepicker1'>
+                <input type='text' class="form-control"/>
+                            <span class="input-group-addon">
+                                <span class="glyphicon glyphicon-calendar">
+                                </span>
+                            </span>
+            </div>
+            <!--</div>-->
+        </div>
+        <div class='col-xs-4'>
+            <!--<div class="form-group">-->
+            <label class="form-label">To:</label>
+
+            <div class='input-group date' id='datetimepicker2'>
+                <input type='text' class="form-control"/>
+                            <span class="input-group-addon">
+                                <span class="glyphicon glyphicon-calendar">
+                                </span>
+                            </span>
+            </div>
+            <!--</div>-->
+        </div>
+        <script type="text/javascript">
+            $(function () {
+                function checkDatesAndLoadPoints(e) {
+                    console.log("Let me out");
+                    var dateFrom = $('#datetimepicker1').data("DateTimePicker").date();
+                    var dateTo = $('#datetimepicker2').data("DateTimePicker").date();
+                    if (dateFrom && dateTo) {
+                        var scope = angular.element(document.getElementById('datetimepicker1')).scope();
+                        scope.dateFrom = dateFrom.format();
+                        scope.dateTo = dateTo.format();
+                        scope.loadPoints();
+                    }
+                }
+                $('#datetimepicker1').datetimepicker();
+                $('#datetimepicker2').datetimepicker();
+                $('#datetimepicker1').on("dp.change", checkDatesAndLoadPoints)
+                $('#datetimepicker2').on("dp.change", checkDatesAndLoadPoints)
+            });
+        </script>
+
+    </div>
 </div>
+
+
 <div class="render-chart-here"></div>

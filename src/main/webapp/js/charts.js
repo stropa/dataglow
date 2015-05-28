@@ -101,7 +101,6 @@ function showChart(data) {
 					x: this.timestamp,
 					y: this.value
 				};
-				debugger;
 				chart.series[0].addPoint(point);
 			});
 /*		}
@@ -110,7 +109,6 @@ function showChart(data) {
 }
 
 createChart = function(mbeans, chartName, renderTo) {
-	debugger;
 	return new Highcharts.Chart({
 		chart: {
 			renderTo:  renderTo, //createNewPortlet(chartName == null ? mbeans[0].name : chartName),

@@ -19,15 +19,21 @@ import ru.rbs.stats.store.CubeDescription;
 import ru.rbs.stats.utils.CompositeName;
 
 import javax.annotation.Resource;
+import java.text.ParseException;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/series")
 public class SeriesController {
 
     private static final Logger logger = LoggerFactory.getLogger(SeriesController.class);
+    public static final DateTimeFormatter FORMATTER = //DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+            //DateTimeFormatter.ISO_INSTANT;
+    DateTimeFormatter.ISO_ZONED_DATE_TIME;
 
     @Resource
     private Stats stats;
@@ -51,18 +57,19 @@ public class SeriesController {
         String cubeName = cubeCoordinates.getCubeName();
         LocalDateTime periodStart = artifact.getTimeStart().toLocalDateTime();
 
-        return getPoints(cubeCoordinates, cubeName, periodStart);
+        return getPoints(cubeCoordinates, cubeName, periodStart, null, true);
     }
 
-    private List<Point> getPoints(final CubeCoordinates cubeCoordinates, String cubeName, LocalDateTime periodStart) {
+    private List<Point> getPoints(final CubeCoordinates cubeCoordinates, String cubeName, LocalDateTime periodStart,
+                                  LocalDateTime periodEnd, boolean autoPeriod) {
         CompositeName key = Stats.buildSerieName(cubeCoordinates);
         CubeDescription cubeSchema = stats.getCubeSchema(cubeName);
         ReportParams reportParams = stats.getReportParams(cubeName);
 
         TimeSerieDataProvider provider = new CachedSerieDataProvider(stats.getCachedSeries(cubeName), key);
         List<Point> points;
-        LocalDateTime start = periodStart.minusSeconds(reportParams.getPeriodSeconds() * 100);
-        LocalDateTime end = periodStart.plusSeconds(reportParams.getPeriodSeconds() * 100);
+        LocalDateTime start = autoPeriod ? periodStart.minusSeconds(reportParams.getPeriodSeconds() * 100) : periodStart;
+        LocalDateTime end = periodEnd != null ? periodEnd : periodStart.plusSeconds(reportParams.getPeriodSeconds() * 100);
 
         points = provider.get(start, end);
         if (points.isEmpty()) {
@@ -88,11 +95,18 @@ public class SeriesController {
     }
 
     @RequestMapping("forCubeCoordinates")
-    public List<Point> forCubeCoordinates(@RequestParam("cubeName") String cubeName,
+    public List<Point> forCubeCoordinates(@RequestParam Map<String, String> parameters,
+                                          @RequestParam(required = false) String dateFrom,
+                                          @RequestParam(required = false) String dateTo,
+                                          @RequestParam("cubeName") String cubeName,
                                           @RequestParam(value = "axe0", required = false) String axe0,
                                           @RequestParam(value = "axe1", required = false) String axe1,
                                           @RequestParam(value = "axe2", required = false) String axe2,
-                                          @RequestParam(value = "aggregate") String aggregate) {
+                                          @RequestParam(value = "aggregate", required = false) String aggregate) throws ParseException {
+        if (aggregate == null) {
+            return Collections.emptyList();
+        }
+        logger.debug(parameters.size() + "");
         CubeDescription cubeSchema = stats.getCubeSchema(cubeName);
         CubeCoordinates cubeCoordinates = new CubeCoordinates(cubeName);
         cubeCoordinates.setVarName(aggregate);
@@ -107,8 +121,17 @@ public class SeriesController {
         }
 
         ReportParams reportParams = stats.getReportParams(cubeName);
-        LocalDateTime periodStart = LocalDateTime.now().minusSeconds(reportParams.getPeriodSeconds() * 100);
-        List<Point> points = getPoints(cubeCoordinates, cubeName, periodStart);
+
+        LocalDateTime periodStart = null;
+        LocalDateTime periodEnd = null;
+        if (dateFrom != null && dateTo != null) {
+            periodStart = LocalDateTime.parse(dateFrom, FORMATTER);
+            periodEnd = LocalDateTime.parse(dateTo, FORMATTER);
+        } else {
+            periodStart = LocalDateTime.now().minusSeconds(reportParams.getPeriodSeconds() * 100);
+        }
+
+        List<Point> points = getPoints(cubeCoordinates, cubeName, periodStart, periodEnd, false);
         return points;
     }
 
