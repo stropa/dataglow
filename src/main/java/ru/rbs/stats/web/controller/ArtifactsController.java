@@ -1,8 +1,6 @@
 package ru.rbs.stats.web.controller;
 
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import ru.rbs.stats.model.tables.pojos.Artifact;
 import ru.rbs.stats.service.ArtifactsService;
 import ru.rbs.stats.store.CubeCoordinates;
@@ -19,6 +17,7 @@ public class ArtifactsController {
     private ArtifactsService service;
 
     @RequestMapping(method = RequestMethod.GET)
+    @ResponseBody
     public List<Artifact> listAll() {
         return service.listAll();
     }

@@ -2,8 +2,8 @@ var app = angular.module('dataglow', ['dataServices', 'ngRoute', 'dataglowContro
 
 app.constant('serverLocation', 'http://localhost:8987/dataglow/mvc');
 
-app.config(['$routeProvider',
-    function ($routeProvider) {
+app.config(['$routeProvider', '$httpProvider',
+    function ($routeProvider, $httpProvider) {
         $routeProvider.
             when('/reports', {
                 templateUrl: 'parts/reports.html',
@@ -17,7 +17,18 @@ app.config(['$routeProvider',
                 templateUrl: 'parts/series.html',
                 controller: 'SeriesController'
             }).
+            when('/login', {
+                templateUrl: 'parts/login.html',
+                controller: 'AuthenticationController'
+            }).
+            when('/', {
+                templateUrl: 'parts/welcome.html',
+                controller: 'AuthenticationController'
+            }).
             otherwise({
-                redirectTo: '/reports'
+                redirectTo: '/'
             });
-    }]);
+
+        $httpProvider.defaults.headers.common["X-Requested-With"] = 'XMLHttpRequest';
+    }
+]);

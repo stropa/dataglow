@@ -20,7 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @RestController
-@RequestMapping("/reports")
+@RequestMapping(value = "/reports", produces = "application/json" )
 public class ReportsController {
 
     private static final Logger logger = LoggerFactory.getLogger(ReportsController.class);
@@ -38,7 +38,7 @@ public class ReportsController {
     @Resource
     private ReportsService reportsService;
 
-    @RequestMapping(method = RequestMethod.GET)
+    @RequestMapping(method = RequestMethod.GET, produces = "application/json")
     public List<Report> getAll() {
         List<Report> reports = new ArrayList<Report>();
         for (ReportParams reportParams : reportSchedulingConfiguration.getReports()) {

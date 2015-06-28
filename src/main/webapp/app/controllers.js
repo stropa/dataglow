@@ -100,7 +100,7 @@ controllers.controller('SeriesController', ['$scope', '$http', 'CubesDataSource'
             },
             {path: "forCubeCoordinates"}
         );
-        $scope.points.$promise.then(function(points) {
+        $scope.points.$promise.then(function (points) {
             showChart(points);
         })
     }
@@ -108,3 +108,51 @@ controllers.controller('SeriesController', ['$scope', '$http', 'CubesDataSource'
     $scope.loadPoints = loadPoints;
 
 }]);
+
+controllers.controller('AuthenticationController',
+
+    function ($rootScope, $scope, $http, $location) {
+
+        var authenticate = function (credentials, callback) {
+
+            var headers = credentials ? {
+                authorization: "Basic "
+                + btoa(credentials.username + ":" + credentials.password)
+            } : {};
+
+            $http.get('mvc/user', {headers: headers}).success(function (data) {
+                if (data.name) {
+                    $rootScope.authenticated = true;
+                } else {
+                    $rootScope.authenticated = false;
+                }
+                callback && callback();
+            }).error(function () {
+                $rootScope.authenticated = false;
+                callback && callback();
+            });
+
+        };
+
+        authenticate();
+        $rootScope.authenticate = authenticate;
+        $scope.credentials = {};
+        $scope.login = function () {
+            authenticate($scope.credentials, function () {
+                if ($rootScope.authenticated) {
+                    $location.path("/");
+                    $scope.error = false;
+                } else {
+                    $location.path("/login");
+                    $scope.error = true;
+                }
+            });
+        };
+    });
+
+controllers.controller('LandingPageController',
+    function($rootScope, $scope, $location) {
+        $rootScope.authenticate();
+        $scope.showLogin = !$rootScope.authenticated;
+    }
+);

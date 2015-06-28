@@ -1,0 +1,20 @@
+<div class="alert alert-danger" ng-show="error">
+    There was a problem logging in. Please try again.
+</div>
+<div class="container">
+
+    <form class="form-signin" ng-submit="login()">
+        <!--<h2 class="form-signin-heading">Please sign in</h2>-->
+        <label for="inputLogin" class="sr-only">Login</label>
+        <input type="text" name="username" ng-model="credentials.username" id="inputLogin" class="form-control" placeholder="Login" required autofocus >
+        <label for="inputPassword" class="sr-only">Password</label>
+        <input type="password" name="password" ng-model="credentials.password" id="inputPassword" class="form-control" placeholder="Password" required>
+        <!--<div class="checkbox">
+            <label>
+                <input type="checkbox" value="remember-me"> Remember me
+            </label>
+        </div>-->
+        <button class="btn btn-lg btn-primary btn-block" type="submit">Sign in</button>
+    </form>
+
+</div> <!-- /container -->

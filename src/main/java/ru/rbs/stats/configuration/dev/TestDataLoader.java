@@ -17,6 +17,7 @@ import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import javax.sql.DataSource;
 import java.io.File;
+import java.sql.SQLException;
 
 public class TestDataLoader {
 
@@ -27,10 +28,10 @@ public class TestDataLoader {
 
 
     @PostConstruct
-    public void loadData() {
+    public void loadData() throws SQLException {
         ResourceDatabasePopulator populator = new ResourceDatabasePopulator();
         populator.addScript(new ClassPathResource("test_database.sql"));
-        populator.execute(testDataSource);
+        populator.populate(testDataSource.getConnection());
 
         final IDataTypeFactory dataTypeFactory = new HsqldbDataTypeFactory();
         IDatabaseTester loader = new DataSourceDatabaseTester(testDataSource) {

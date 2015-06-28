@@ -5,6 +5,7 @@ import org.springframework.beans.factory.config.PropertiesFactoryBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
 import ru.rbs.stats.configuration.SystemProperties;
 import ru.rbs.stats.data.SQLCubeDescriptionParser;
 
@@ -37,7 +38,7 @@ public class TestDataSourceConfig {
     @Bean(name = "settings")
     public PropertiesFactoryBean getProperties() {
         PropertiesFactoryBean props = new PropertiesFactoryBean();
-        props.setLocations(new ClassPathResource("test.config.properties"));
+        props.setLocations(new Resource[] {new ClassPathResource("test.config.properties")});
         return props;
     }
 

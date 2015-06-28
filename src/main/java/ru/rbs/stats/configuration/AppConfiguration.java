@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
 import ru.rbs.stats.configuration.dev.TestDatabaseConfiguration;
 
 @Configuration
@@ -15,6 +16,7 @@ import ru.rbs.stats.configuration.dev.TestDatabaseConfiguration;
         TestDatabaseConfiguration.class,
         JooqDaosConfiguration.class,
         MvcConfiguration.class,
+        WebSecurityConfiguration.class,
         StatsReportSchedulingConfiguration.class
         })
 
@@ -23,7 +25,7 @@ public class AppConfiguration {
     @Bean(name = "settings")
     public PropertiesFactoryBean getProperties() {
         PropertiesFactoryBean props = new PropertiesFactoryBean();
-        props.setLocations(new ClassPathResource("config.properties"));
+        props.setLocations(new Resource[]{new ClassPathResource("config.properties")});
         return props;
     }
 

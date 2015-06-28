@@ -10,7 +10,10 @@
     <packaging>war</packaging>
 
     <properties>
-        <spring.version>4.1.1.RELEASE</spring.version>
+        <spring.version>4.0.3.RELEASE</spring.version>
+        <!--<spring.security.version>4.0.1.RELEASE</spring.security.version>-->
+        <spring.security.version>3.2.3.RELEASE</spring.security.version>
+        <jstl.version>1.2</jstl.version>
         <jooq.generate.tmp.db.driver>org.hsqldb.jdbc.JDBCDriver</jooq.generate.tmp.db.driver>
         <jooq.generate.tmp.db.url>jdbc:hsqldb:file:hsqldb/generatedb;shutdown=true</jooq.generate.tmp.db.url>
         <jooq.generate.tmp.db.login>dataglow</jooq.generate.tmp.db.login>
@@ -21,9 +24,8 @@
 
         <dependency>
             <groupId>javax.servlet</groupId>
-            <artifactId>javax.servlet-api</artifactId>
-            <version>3.0.1</version>
-            <scope>provided</scope>
+            <artifactId>servlet-api</artifactId>
+            <version>2.5</version>
         </dependency>
 
         <dependency>
@@ -40,6 +42,26 @@
             <groupId>org.springframework</groupId>
             <artifactId>spring-web</artifactId>
             <version>${spring.version}</version>
+        </dependency>
+
+        <!-- Spring Security -->
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-web</artifactId>
+            <version>${spring.security.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-config</artifactId>
+            <version>${spring.security.version}</version>
+        </dependency>
+
+        <!-- jstl for jsp page -->
+        <dependency>
+            <groupId>jstl</groupId>
+            <artifactId>jstl</artifactId>
+            <version>${jstl.version}</version>
         </dependency>
 
         <dependency>
@@ -89,6 +111,18 @@
             <artifactId>jooq-codegen</artifactId>
             <version>3.5.1</version>
         </dependency>
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.5.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+            <version>2.5.0</version>
+        </dependency>
+
         <dependency>
             <groupId>org.modelmapper.extensions</groupId>
             <artifactId>modelmapper-jooq</artifactId>
@@ -310,7 +344,7 @@
                             </systemProperties>
                             <webApp>
                                 <contextPath>/dataglow</contextPath>
-                                <webInfIncludeJarPattern>.*/spring-web.*.jar$</webInfIncludeJarPattern>
+                                <!--<webInfIncludeJarPattern>.*/spring-.*.jar$</webInfIncludeJarPattern>-->
                             </webApp>
                             <scanIntervalSeconds>0</scanIntervalSeconds>
                             <connectors>

@@ -1,10 +1,6 @@
 package ru.rbs.stats.web;
 
 import org.springframework.web.servlet.support.AbstractAnnotationConfigDispatcherServletInitializer;
-import ru.rbs.stats.configuration.AppConfiguration;
-import ru.rbs.stats.web.filter.SimpleCORSFilter;
-
-import javax.servlet.Filter;
 
 public class WebappInitializer extends AbstractAnnotationConfigDispatcherServletInitializer {
 
@@ -20,12 +16,12 @@ public class WebappInitializer extends AbstractAnnotationConfigDispatcherServlet
 
     @Override
     protected Class<?>[] getServletConfigClasses() {
-        return new Class<?>[]{AppConfiguration.class};
+        return null;
     }
 
-    @Override
+    /*@Override
     protected Filter[] getServletFilters() {
         Filter[] servletFilters = super.getServletFilters();
         return new SimpleCORSFilter[]{new SimpleCORSFilter()};
-    }
+    }*/
 }
