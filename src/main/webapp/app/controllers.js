@@ -123,6 +123,7 @@ controllers.controller('AuthenticationController',
             $http.get('mvc/user', {headers: headers}).success(function (data) {
                 if (data.name) {
                     $rootScope.authenticated = true;
+                    $rootScope.authorities = data.authorities;
                 } else {
                     $rootScope.authenticated = false;
                 }
@@ -148,6 +149,17 @@ controllers.controller('AuthenticationController',
                 }
             });
         };
+
+        $rootScope.hasPermission = function(permission) {
+            if($rootScope.authorities) {
+                $rootScope.authorities.forEach(function(el) {
+                    if (el.authority == permission ) {
+                        return true;
+                    }
+                });
+            }
+            return false;
+        }
     });
 
 controllers.controller('LandingPageController',

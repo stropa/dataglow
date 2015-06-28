@@ -1,7 +1,7 @@
 <div class="row row-offcanvas row-offcanvas-right">
     <div class="col-xs-12 col-sm-9">
         <div class="row">
-            <div class="container">
+            <div class="container" ng-show="hasPermission('EDIT_REPORTS')">
                 <button type="button" class="btn btn-link" ng-click="startCreating()">
                     <span class="glyphicon glyphicon-plus"></span>Create New Report
                 </button>

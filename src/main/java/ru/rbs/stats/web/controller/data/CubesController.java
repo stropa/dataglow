@@ -2,22 +2,18 @@ package ru.rbs.stats.web.controller.data;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import ru.rbs.stats.Stats;
 import ru.rbs.stats.configuration.StatsReportSchedulingConfiguration;
 import ru.rbs.stats.service.CubesService;
 import ru.rbs.stats.store.CubeDescription;
+import ru.rbs.stats.web.dto.CubeAxes;
 
 import javax.annotation.Resource;
 import java.util.Collection;
-import java.util.List;
-import java.util.Map;
 
 @RestController
-@RequestMapping("/cubes")
+@RequestMapping(value = "/cubes", produces = "application/json")
 public class CubesController {
 
     private static final Logger logger = LoggerFactory.getLogger(CubesController.class);
@@ -38,22 +34,17 @@ public class CubesController {
 
     }
 
-    @RequestMapping("{id}")
+    @RequestMapping(method = RequestMethod.GET, value = "{id}", produces = "application/json")
+    @ResponseBody
     public CubeDescription getById(@PathVariable String id) {
         return cubesService.get(Long.valueOf(id));
     }
 
-    @RequestMapping("{id}/axes")
+    @RequestMapping(method = RequestMethod.GET, value = "{id}/axes" , produces = "application/json")
+    @ResponseBody
     public CubeAxes getCubeAxes(@PathVariable String id) {
-        return new CubeAxes(cubesService.getAxes(Long.valueOf(id)));
-    }
-
-    public static class CubeAxes {
-        private Map<String, List<String>> axes;
-
-        public CubeAxes(Map<String, List<String>> axes) {
-            this.axes = axes;
-        }
+        CubeAxes cubeAxes = new CubeAxes(cubesService.getAxes(Long.valueOf(id)));
+        return cubeAxes;
     }
 
 
