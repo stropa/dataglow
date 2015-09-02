@@ -42,15 +42,15 @@ public class DatabaseConfiguration {
         return new InfluxDBCubeDataSource(influxDB, systemProperties.getProperty(SystemProperties.INFLUXDB_DATABASE_NAME));
     }
 
-    @Bean(name = "dataSource")
-    @Profile("!embedded-test-database")
+    @Bean(name = "dataSource") // business data
+    @Profile(value = {"use-jndi-datasource"})
     public DataSource getDataSource() {
         final JndiDataSourceLookup dsLookup = new JndiDataSourceLookup();
         dsLookup.setResourceRef(true);
         return dsLookup.getDataSource("jdbc/GlowDataSource");
     }
 
-    @Bean(name = "appDataSource")
+    @Bean(name = "appDataSource") // application own data
     public DataSource getAppDataSource() {
         BoneCPDataSource dataSource = new BoneCPDataSource();
         dataSource.setJdbcUrl("jdbc:hsqldb:file:/Users/stropa/projects/BPC/analytics/hsqldb/dataglowapp");
