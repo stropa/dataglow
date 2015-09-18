@@ -151,14 +151,16 @@ controllers.controller('AuthenticationController',
         };
 
         $rootScope.hasPermission = function(permission) {
+            result = false;
             if($rootScope.authorities) {
                 $rootScope.authorities.forEach(function(el) {
+                    debugger;
                     if (el.authority == permission ) {
-                        return true;
+                        result = true;
                     }
                 });
             }
-            return false;
+            return result;
         }
     });
 

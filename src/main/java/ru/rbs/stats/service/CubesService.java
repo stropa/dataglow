@@ -2,7 +2,8 @@ package ru.rbs.stats.service;
 
 import com.google.gson.Gson;
 import org.influxdb.InfluxDB;
-import org.influxdb.dto.Serie;
+import org.influxdb.dto.Query;
+import org.influxdb.dto.QueryResult;
 import org.jooq.DSLContext;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
@@ -85,15 +86,22 @@ public class CubesService {
         if (cd == null) return null;
         Map<String, List<String>> result = new LinkedHashMap<>();
         for (String dimension : fromPojo(cd).getDimensions()) {
-            List<Serie> list = null;
+
             try {
-                list = influxDB.query(systemProperties.getProperty(SystemProperties.INFLUXDB_DATABASE_NAME), "select distinct(" + dimension + ") from " + cd.getName(), TimeUnit.SECONDS);
-                List<String> distinct = list.get(0).getRows().stream().map(m -> (String) m.get("distinct")).collect(Collectors.toList());
+                String databaseName = systemProperties.getProperty(SystemProperties.INFLUXDB_DATABASE_NAME);
+                QueryResult queryResult = influxDB.query(
+                        new Query("select distinct(" + dimension + ") from " + cd.getName(), databaseName)
+                        , TimeUnit.SECONDS);
+                //List<String> distinct = list.get(0).getRows().stream().map(m -> (String) m.get("distinct")).collect(Collectors.toList());
+                //result.put(dimension, distinct);
+                List distinct = ((List) queryResult.getResults().get(0).getSeries().get(0).getValues().get(0).get(1));
                 result.put(dimension, distinct);
+                System.out.println(queryResult);
             } catch (Exception e) {
                 logger.debug("Failed to get distinct dimensions values for cube " + cd.getName(), e );
             }
         }
         return result;
+        //return null;
     }
 }

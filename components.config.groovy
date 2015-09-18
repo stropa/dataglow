@@ -1,12 +1,12 @@
-import com.mchange.v2.c3p0.ComboPooledDataSource
+import com.jolbox.bonecp.BoneCPDataSource
 
 beans {
-    dataSource(ComboPooledDataSource) {
-        driverClass = "org.postgresql.Driver"
-        jdbcUrl = "jdbc:postgresql://127.0.0.1:5432/rbsbase"
-        maxPoolSize = 20
-        user = "rbs"
-        password = "rbs"
+    dataSource(BoneCPDataSource) {
+        driverClass = "oracle.jdbc.driver.OracleDriver"
+        jdbcUrl = "jdbc:oracle:thin:@localhost:1621:rbs"
+        //maxPoolSize = 20
+        user = "XXX"
+        password = "XXX"
     }
 
 }

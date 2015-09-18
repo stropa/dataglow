@@ -51,37 +51,6 @@ public class Stats implements CubeSchemaProvider {
 
 
 
-    @PostConstruct
-    public void init() {
-        //reportBuilders.put("merchantDailyCounts", new SQLReportBuilder(jdbcTemplate));
-
-
-
-        final CubeCoordinates c = new CubeCoordinates("merchant.operation.actionCode");
-        c.setAxis("merchant", "bsigroup");
-        c.setAxis("operation", "AUTHORIZATION_FINISHED");
-        c.setAxis("actionCode", "0");
-        c.setVarName("amount");
-
-        final TimeSeriesAnalyzeConfig firstAnalyzer = new TimeSeriesAnalyzeConfig("try", c, new TripleSigmaRule(30), 86400L);
-        firstAnalyzer.setJob(new Runnable() {
-            @Override
-            public void run() {
-                // fetch series from database and apply algorithm
-                LocalDateTime periodStart = firstAnalyzer.getLastRun();
-                LocalDateTime periodEnd = firstAnalyzer.getLastRun().plusSeconds(firstAnalyzer.getPeriodSeconds());
-
-                /*List<Artifact> artifacts = firstAnalyzer.getAlgorithm().apply(cubeDataSource, c, periodStart, periodEnd);
-
-                for (Artifact artifact : artifacts) {
-                    logger.debug("ARTIFACT DISCOVERED!!!: " + artifact + " in cube: " + c);
-                }*/
-            }
-        });
-        metricsRegistry.addSeriesAnalyzer(firstAnalyzer);
-    }
-
-
     public void process(ReportParams config, boolean unscheduled, LocalDateTime from, LocalDateTime to,
                         boolean cache, String whatToAnalyze) {
         StatsReportBuilder reportBuilder = reportBuilders.get(config.getReportName());
@@ -95,7 +64,7 @@ public class Stats implements CubeSchemaProvider {
         LocalDateTime end = to == null ? nextPeriodEnd : to;
 
         int part = 1;
-        while (nextPeriodEnd.isBefore(end.minusSeconds(periodSeconds))) {
+        while (nextPeriodEnd.isBefore(end.plusNanos(1000))) {
             // build report for next period part
             logger.debug("It's " + LocalDateTime.now() + " now and we are going to fetch stats report from " + nextPeriodStart + " to " + nextPeriodEnd);
             Report report = reportBuilder.buildReport(part > 1 ? nextPeriodStart.plusNanos(1000) : nextPeriodStart, nextPeriodEnd);
@@ -171,14 +140,14 @@ public class Stats implements CubeSchemaProvider {
                 }
             }
         }
-        fillMissingData(report, time, cache, updateCounter);
+        //fillMissingData(report, time, cache, updateCounter);
         logger.info("Finished updating cached series");
     }
 
-    // TODO: use configurable strategies for filling missing data
+    // TODO: move NA data fill to SeriesController (no more keeping synthetic zeros in database)
     private void fillMissingData(Report report, LocalDateTime time, TimeSeriesCache cache, long updateCounter) {
 
-        Map<CompositeName, List<CachedSerieContainer>> groupedByDimentions = new HashMap<>();
+        /*Map<CompositeName, List<CachedSerieContainer>> groupedByDimentions = new HashMap<>();
         for (CompositeName serieName : cache.getCachedSeries().keySet()) {
             CachedSerieContainer serieContainer = cache.getCachedSeries().get(serieName);
             if (serieContainer.getUpdateCount() < updateCounter) {
@@ -203,7 +172,7 @@ public class Stats implements CubeSchemaProvider {
             }
             entry.setAggregates(aggregates);
             report.getEntries().add(entry);
-        }
+        }*/
 
         /*serieContainer.putValue(time, 0);
         ReportEntry e = new ReportEntry();

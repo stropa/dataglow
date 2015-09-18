@@ -9,11 +9,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.springframework.jdbc.datasource.lookup.JndiDataSourceLookup;
 import ru.rbs.stats.data.InfluxDBCubeDataSource;
 import ru.rbs.stats.data.TimedCubeDataSource;
 
+import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import javax.sql.DataSource;
 
@@ -44,7 +47,7 @@ public class DatabaseConfiguration {
 
     @Bean(name = "dataSource") // business data
     @Profile(value = {"use-jndi-datasource"})
-    public DataSource getDataSource() {
+    public DataSource getJndiDataSource() {
         final JndiDataSourceLookup dsLookup = new JndiDataSourceLookup();
         dsLookup.setResourceRef(true);
         return dsLookup.getDataSource("jdbc/GlowDataSource");
@@ -53,7 +56,7 @@ public class DatabaseConfiguration {
     @Bean(name = "appDataSource") // application own data
     public DataSource getAppDataSource() {
         BoneCPDataSource dataSource = new BoneCPDataSource();
-        dataSource.setJdbcUrl("jdbc:hsqldb:file:/Users/stropa/projects/BPC/analytics/hsqldb/dataglowapp");
+        dataSource.setJdbcUrl("jdbc:hsqldb:file:hsqldb/dataglowapp");
         dataSource.setDriverClass("org.hsqldb.jdbc.JDBCDriver");
         return dataSource;
     }
@@ -66,6 +69,14 @@ public class DatabaseConfiguration {
     @Bean(name = "jdbcTemplate")
     public JdbcTemplate getJdbcTemplate() {
         return new JdbcTemplate(dataSource);
+    }
+
+    @PostConstruct
+    public void initAppDBSchemaIfFirstStart() {
+
+        final ResourceDatabasePopulator populator = new ResourceDatabasePopulator();
+        populator.setScripts(new ClassPathResource("schema.sql"));
+        populator.execute(appDataSource);
     }
 
 }

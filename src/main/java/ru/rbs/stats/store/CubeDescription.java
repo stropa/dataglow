@@ -65,7 +65,7 @@ public class CubeDescription {
     }
 
     public static enum CubeDataType {
-        INTEGER, STRING, FLOAT;
+        INTEGER, STRING, FLOAT, UNKNOWN
     }
 
 }

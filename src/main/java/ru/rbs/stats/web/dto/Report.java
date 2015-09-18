@@ -25,6 +25,8 @@ public class Report {
         this.periodUnits = periodUnits;
     }
 
+    public Report() {
+    }
 
     public Long getId() {
         return id;
