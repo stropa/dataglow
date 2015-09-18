@@ -37,9 +37,9 @@ public class TestDatabaseConfiguration {
         return dataSource;
     }
 
-    @Bean
+    /*@Bean
     public TestDataLoader getTestDataLoader() {
         return new TestDataLoader();
-    }
+    }*/
 
 }
