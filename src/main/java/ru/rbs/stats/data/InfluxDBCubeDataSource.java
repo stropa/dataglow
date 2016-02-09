@@ -13,7 +13,6 @@ import ru.rbs.stats.store.CubeDescription;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.time.chrono.ChronoZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -39,12 +38,12 @@ public class InfluxDBCubeDataSource implements TimedCubeDataSource {
     public void sendToStorage(Report report, LocalDateTime time) {
         BatchPoints batchPoints = BatchPoints.database(databaseName).build();
 
-        List<String> allColumns = new ArrayList<String>();
+        List<String> allColumns = new ArrayList<>();
         allColumns.addAll(report.getCubeDescription().getDimensions());
         allColumns.addAll(report.getCubeDescription().getAggregates());
         //allColumns.add("time");
 
-        Instant instant = ((ChronoZonedDateTime) time.atZone(ZoneId.systemDefault())).toInstant();
+        Instant instant = time.atZone(ZoneId.systemDefault()).toInstant();
         Date timeSoSend = Date.from(instant);
         for (ReportEntry entry : report.getEntries()) {
             Map<String, Object> fields = new HashMap<>();

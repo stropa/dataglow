@@ -37,7 +37,7 @@ public class DatabaseConfiguration {
 
     @Bean
     public InfluxDB getInfluxDB() {
-        return InfluxDBFactory.connect("http://localhost:8086", "root", "root");
+        return InfluxDBFactory.connect("http://10.77.5.161:8086", "root", "root");
     }
 
     @Bean(name = "timedCubeDataSource")

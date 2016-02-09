@@ -27,8 +27,6 @@ public class StatsReportSchedulingConfiguration {
     // TODO: make these reports manageable via interface and store in DB
     private final List<ReportParams> reports = new ArrayList<ReportParams>();
 
-    @Autowired
-    private Stats stats;
 
     public StatsReportSchedulingConfiguration() {
 

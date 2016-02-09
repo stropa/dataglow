@@ -140,46 +140,7 @@ public class Stats implements CubeSchemaProvider {
                 }
             }
         }
-        //fillMissingData(report, time, cache, updateCounter);
         logger.info("Finished updating cached series");
-    }
-
-    // TODO: move NA data fill to SeriesController (no more keeping synthetic zeros in database)
-    private void fillMissingData(Report report, LocalDateTime time, TimeSeriesCache cache, long updateCounter) {
-
-        /*Map<CompositeName, List<CachedSerieContainer>> groupedByDimentions = new HashMap<>();
-        for (CompositeName serieName : cache.getCachedSeries().keySet()) {
-            CachedSerieContainer serieContainer = cache.getCachedSeries().get(serieName);
-            if (serieContainer.getUpdateCount() < updateCounter) {
-                // means that this container was not updated on last run, so we need to put generated data
-                List<String> parts = serieName.getParts();
-                CompositeName dimPart = CompositeName.fromParts(parts.subList(0, parts.size() - 1).toArray(new String[parts.size() - 1]));
-                List<CachedSerieContainer> group = groupedByDimentions.get(dimPart);
-                if (group == null) {
-                    group = new ArrayList<>();
-                    groupedByDimentions.put(dimPart, group);
-                }
-                group.add(serieContainer);
-            }
-        }
-        for (CompositeName nameOfSerieGroup : groupedByDimentions.keySet()) {
-            ReportEntry entry = new ReportEntry();
-            entry.setProfile(nameOfSerieGroup.getParts().subList(1, nameOfSerieGroup.getParts().size()));
-            List<Number> aggregates = new ArrayList<>();
-            //List<CachedSerieContainer> containers = groupedByDimentions.get(nameOfSerieGroup);
-            for (String aggregateName : report.getCubeDescription().getAggregates()) {
-                aggregates.add(0);
-            }
-            entry.setAggregates(aggregates);
-            report.getEntries().add(entry);
-        }*/
-
-        /*serieContainer.putValue(time, 0);
-        ReportEntry e = new ReportEntry();
-        List<String> parts = serieContainer.getCompositeName().getParts();
-        e.getProfile().addAll(parts.subList(0, parts.size() - 1));
-
-        report.getEntries().add(e);*/
     }
 
     private void cleanExpiredCacheEntries(Duration cacheAge) {

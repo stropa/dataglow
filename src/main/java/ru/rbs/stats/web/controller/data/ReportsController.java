@@ -66,9 +66,9 @@ public class ReportsController {
         final ReportParams params = new ReportParams(report.getName(), (long) report.getPeriod(),
                 ChronoUnit.valueOf(report.getPeriodUnits()));
 
-        params.setQuery(report.getQuery());
+        params.setQuery(report.getQuery().replace(";", ""));
 
-        params.setCubeDescription(sqlCubeDescriptionParser.parseCubeFromQuery(report.getQuery(), report.getName()));
+        params.setCubeDescription(sqlCubeDescriptionParser.parseCubeFromQuery(report.getQuery(), report.getName().replaceAll("[^\\w]", "")));
 
         params.setUseCache(report.isUseCache());
         if (report.isUseCache()) {

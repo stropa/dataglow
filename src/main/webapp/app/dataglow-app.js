@@ -1,6 +1,6 @@
 var app = angular.module('dataglow', ['dataServices', 'ngRoute', 'dataglowControllers']);
 
-app.constant('serverLocation', 'http://localhost:8987/dataglow/mvc');
+app.constant('serverLocation', '/dataglow/mvc');
 
 app.config(['$routeProvider', '$httpProvider',
     function ($routeProvider, $httpProvider) {

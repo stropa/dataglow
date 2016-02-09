@@ -89,12 +89,18 @@ public class CubesService {
 
             try {
                 String databaseName = systemProperties.getProperty(SystemProperties.INFLUXDB_DATABASE_NAME);
+                String command = "select distinct(" + dimension + ") from " + cd.getName();
+                logger.debug("Executing query {} in influxDB database {}", command, databaseName);
                 QueryResult queryResult = influxDB.query(
-                        new Query("select distinct(" + dimension + ") from " + cd.getName(), databaseName)
+                        new Query(command, databaseName)
                         , TimeUnit.SECONDS);
                 //List<String> distinct = list.get(0).getRows().stream().map(m -> (String) m.get("distinct")).collect(Collectors.toList());
                 //result.put(dimension, distinct);
-                List distinct = ((List) queryResult.getResults().get(0).getSeries().get(0).getValues().get(0).get(1));
+                List<QueryResult.Series> series = queryResult.getResults().get(0).getSeries();
+                if (series == null) {
+                    continue;
+                }
+                List distinct = ((List) series.get(0).getValues().get(0).get(1));
                 result.put(dimension, distinct);
                 System.out.println(queryResult);
             } catch (Exception e) {
