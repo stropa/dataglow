@@ -57,12 +57,12 @@ public class SQLReportBuilder implements StatsReportBuilder {
                 }
                 for (String aggregateName : config.getCubeDescription().getAggregates()) {
                     switch (config.getCubeDescription().getType(aggregateName)) {
-                        case CubeDescription.CubeDataType.INTEGER:
+                        case INTEGER:
                             entry.getAggregates().add(rs.getLong(aggregateName.toUpperCase()));
                             break;
-                        case CubeDescription.CubeDataType.FLOAT:
+                        case FLOAT:
                             entry.getAggregates().add(rs.getFloat(aggregateName.toUpperCase()));
-                        case CubeDescription.CubeDataType.STRING:
+                        case STRING:
                             logger.warn("Converting aggregate column {} from String", aggregateName);
                             entry.getAggregates().add(Float.valueOf(rs.getString(aggregateName.toUpperCase())));
                     }
