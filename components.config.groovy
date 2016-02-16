@@ -1,9 +1,10 @@
 import com.jolbox.bonecp.BoneCPDataSource
 
+// TODO: move datasources to DB
 beans {
     dataSource(BoneCPDataSource) {
-        driverClass = "oracle.jdbc.driver.OracleDriver"
-        jdbcUrl = "jdbc:oracle:thin:@localhost:1621:rbs"
+        driverClass = "..."
+        jdbcUrl = "..."
         //maxPoolSize = 20
         user = "XXX"
         password = "XXX"

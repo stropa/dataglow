@@ -4,9 +4,9 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>ru.rbs</groupId>
-    <artifactId>analytics</artifactId>
-    <version>0.1-SNAPSHOT</version>
+    <groupId>org.dataglow</groupId>
+    <artifactId>dataglow</artifactId>
+    <version>0.2-SNAPSHOT</version>
     <packaging>war</packaging>
 
     <properties>
@@ -300,8 +300,8 @@
                             <customTypes>
                                 <customType>
                                     <name>CubeCoordinates</name>
-                                    <type>ru.rbs.stats.store.CubeCoordinates</type>
-                                    <converter>ru.rbs.stats.model.convert.CubeCoordinatesJsonStringConverter</converter>
+                                    <type>org.dataglow.v1.store.CubeCoordinates</type>
+                                    <converter>org.dataglow.v1.model.convert.CubeCoordinatesJsonStringConverter</converter>
                                 </customType>
                             </customTypes>
 
@@ -315,7 +315,7 @@
 
                         </database>
                         <target>
-                            <packageName>ru.rbs.stats.model</packageName>
+                            <packageName>org.dataglow.v1.model</packageName>
                             <directory>target/generated-sources/jooq</directory>
                         </target>
                         <!-- For more information about below properties see:
